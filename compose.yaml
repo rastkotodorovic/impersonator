@@ -27,6 +27,7 @@ services:
             - meilisearch
             - mailpit
             - selenium
+            - waha
     mysql:
         image: 'mysql:8.4'
         ports:
@@ -101,6 +102,27 @@ services:
             - '/dev/shm:/dev/shm'
         networks:
             - sail
+    waha:
+        image: 'devlikeapro/waha:latest'
+        platform: linux/amd64
+        ports:
+            - '${FORWARD_WAHA_PORT:-3000}:3000'
+        environment:
+            WHATSAPP_DEFAULT_ENGINE: 'NOWEB'
+            WAHA_DASHBOARD_ENABLED: 'true'
+            WHATSAPP_RESTART_ALL_SESSIONS: 'true'
+            WAHA_LOG_LEVEL: 'info'
+            WAHA_API_KEY: '${WAHA_API_KEY}'
+        volumes:
+            - 'sail-waha:/tmp/waha-sessions'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - 'wget --no-verbose --spider --header="X-Api-Key: $${WAHA_API_KEY}" http://127.0.0.1:3000/api/sessions || exit 0'
+            retries: 3
+            timeout: 5s
 networks:
     sail:
         driver: bridge
@@ -110,4 +132,6 @@ volumes:
     sail-redis:
         driver: local
     sail-meilisearch:
+        driver: local
+    sail-waha:
         driver: local
