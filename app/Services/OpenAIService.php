@@ -47,6 +47,18 @@ class OpenAIService
             ->acceptJson();
     }
 
+    public function chatCompletion(array $messages, ?string $model = null): string
+    {
+        $response = $this->client()->post('/chat/completions', [
+            'model' => $model ?? $this->model,
+            'messages' => $messages,
+        ]);
+
+        $data = $response->json();
+
+        return $data['choices'][0]['message']['content'] ?? '';
+    }
+
     public function streamChatCompletion(array $messages, ?string $model = null): Generator
     {
         $response = $this->client()

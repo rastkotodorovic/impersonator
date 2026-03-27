@@ -86,10 +86,16 @@
                                 </div>
                             </div>
 
-                            <button id="disconnect-btn"
-                                    class="mt-6 inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                Disconnect
-                            </button>
+                            <div class="mt-6 flex items-center justify-center gap-3">
+                                <a href="{{ route('whatsapp.auto-reply.index') }}"
+                                   class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                                    Auto-Reply Settings
+                                </a>
+                                <button id="disconnect-btn"
+                                        class="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                    Disconnect
+                                </button>
+                            </div>
                         </div>
                     </div>
 

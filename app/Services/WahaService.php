@@ -32,8 +32,12 @@ class WahaService
 
     public function startSession(string $sessionName, ?string $webhookUrl = null): array
     {
+        // Delete existing session first (WAHA free only allows one 'default' session)
+        $this->deleteSession($sessionName);
+
         $payload = [
             'name' => $sessionName,
+            'start' => true,
             'config' => [
                 'proxy' => null,
                 'webhooks' => [],
@@ -43,18 +47,25 @@ class WahaService
         if ($webhookUrl) {
             $payload['config']['webhooks'][] = [
                 'url' => $webhookUrl,
-                'events' => ['session.status'],
+                'events' => ['session.status', 'message'],
             ];
         }
 
         $response = $this->client()->post('/api/sessions', $payload);
 
-        return $response->json();
+        return $response->json() ?? [];
+    }
+
+    public function deleteSession(string $sessionName): bool
+    {
+        $response = $this->client()->delete("/api/sessions/{$sessionName}");
+
+        return $response->successful();
     }
 
     public function getQrCode(string $sessionName): ?array
     {
-        $response = $this->client()->get("/api/{$sessionName}/auth/qr", [
+        $response = $this->client()->accept('image/png')->get("/api/{$sessionName}/auth/qr", [
             'format' => 'image',
         ]);
 
@@ -98,6 +109,33 @@ class WahaService
         $response = $this->client()->post("/api/sessions/{$sessionName}/logout");
 
         return $response->successful();
+    }
+
+    public function sendMessage(string $sessionName, string $chatId, string $text): array
+    {
+        $response = $this->client()->post('/api/sendText', [
+            'session' => $sessionName,
+            'chatId' => $chatId,
+            'text' => $text,
+        ]);
+
+        return $response->json();
+    }
+
+    public function updateSessionWebhooks(string $sessionName, string $webhookUrl, array $events): array
+    {
+        $response = $this->client()->put("/api/sessions/{$sessionName}", [
+            'config' => [
+                'webhooks' => [
+                    [
+                        'url' => $webhookUrl,
+                        'events' => $events,
+                    ],
+                ],
+            ],
+        ]);
+
+        return $response->json();
     }
 
     public function isHealthy(): bool

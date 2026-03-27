@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessWhatsappAutoReply;
+use App\Models\AutoReplyContact;
+use App\Models\WhatsappMessageLog;
 use App\Models\WhatsappSession;
 use App\Services\WahaService;
 use Illuminate\Http\JsonResponse;
@@ -26,7 +29,7 @@ class WhatsappController extends Controller
     public function connect(Request $request): JsonResponse
     {
         $user = $request->user();
-        $sessionName = 'user_'.$user->id;
+        $sessionName = config('services.waha.session_name', 'default');
 
         $session = WhatsappSession::updateOrCreate(
             ['user_id' => $user->id],
@@ -167,6 +170,78 @@ class WhatsappController extends Controller
             }
         }
 
+        if ($event === 'message') {
+            \Log::info('WAHA message webhook', $request->all());
+            $this->handleIncomingMessage($sessionName, $payload);
+        }
+
         return response()->json(['ok' => true]);
+    }
+
+    protected function handleIncomingMessage(string $sessionName, array $payload): void
+    {
+        // Skip messages sent by us (prevent infinite loop)
+        if ($payload['fromMe'] ?? false) {
+            return;
+        }
+
+        $session = WhatsappSession::where('session_name', $sessionName)->first();
+
+        if (! $session || ! $session->isConnected()) {
+            return;
+        }
+
+        $user = $session->user;
+
+        // WAHA NOWEB uses LID addressing; real phone is in _data.key.remoteJidAlt
+        $from = $payload['_data']['key']['remoteJidAlt']
+            ?? $payload['from']
+            ?? null;
+        $body = $payload['body'] ?? '';
+        $messageId = $payload['id'] ?? null;
+
+        if (! $from || ! $body) {
+            return;
+        }
+
+        // Check for duplicate message
+        if ($messageId && WhatsappMessageLog::where('waha_message_id', $messageId)->exists()) {
+            return;
+        }
+
+        // Normalize: strip @s.whatsapp.net, @c.us, or @lid suffix
+        $normalizedPhone = preg_replace('/@.*$/', '', $from);
+        $contact = AutoReplyContact::where('user_id', $user->id)
+            ->where('phone_number', $normalizedPhone)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $contact) {
+            return;
+        }
+
+        // Check user has OpenAI credentials
+        if (! $user->openaiCredential?->hasValidCredential()) {
+            return;
+        }
+
+        // Rate limit: skip if we replied to this contact in the last 5 seconds
+        $recentReply = WhatsappMessageLog::where('user_id', $user->id)
+            ->where('contact_phone', $normalizedPhone)
+            ->where('direction', 'outgoing')
+            ->where('created_at', '>', now()->subSeconds(5))
+            ->exists();
+
+        if ($recentReply) {
+            return;
+        }
+
+        ProcessWhatsappAutoReply::dispatch(
+            $user->id,
+            $normalizedPhone,
+            $body,
+            $sessionName,
+            $messageId,
+        );
     }
 }
