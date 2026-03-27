@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 class WahaService
 {
     protected string $baseUrl;
+
     protected string $apiKey;
 
     public function __construct()
@@ -103,6 +104,7 @@ class WahaService
     {
         try {
             $response = $this->client()->get('/health');
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;

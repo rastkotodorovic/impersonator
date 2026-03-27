@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('whatsapp.index')" :active="request()->routeIs('whatsapp.*')">
                         {{ __('WhatsApp') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.*')">
+                        {{ __('Chat') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -75,6 +78,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('whatsapp.index')" :active="request()->routeIs('whatsapp.*')">
                 {{ __('WhatsApp') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.*')">
+                {{ __('Chat') }}
             </x-responsive-nav-link>
         </div>
 

@@ -35,4 +35,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(WhatsappSession::class);
     }
+
+    public function openaiCredential(): HasOne
+    {
+        return $this->hasOne(UserOpenaiCredential::class);
+    }
 }

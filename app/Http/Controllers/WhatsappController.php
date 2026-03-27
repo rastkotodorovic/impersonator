@@ -26,7 +26,7 @@ class WhatsappController extends Controller
     public function connect(Request $request): JsonResponse
     {
         $user = $request->user();
-        $sessionName = 'user_' . $user->id;
+        $sessionName = 'user_'.$user->id;
 
         $session = WhatsappSession::updateOrCreate(
             ['user_id' => $user->id],
@@ -79,7 +79,7 @@ class WhatsappController extends Controller
 
         return response()->json([
             'status' => 'scan_qr',
-            'qr' => $qr ? 'data:' . $qr['mimetype'] . ';base64,' . $qr['image'] : null,
+            'qr' => $qr ? 'data:'.$qr['mimetype'].';base64,'.$qr['image'] : null,
         ]);
     }
 

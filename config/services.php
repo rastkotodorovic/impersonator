@@ -41,4 +41,11 @@ return [
         'session_name' => env('WAHA_SESSION_NAME', 'default'),
     ],
 
+    'openai' => [
+        'client_id' => env('OPENAI_CLIENT_ID'),
+        'client_secret' => env('OPENAI_CLIENT_SECRET'),
+        'redirect' => env('OPENAI_REDIRECT_URI', '/openai/callback'),
+        'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-4o'),
+    ],
+
 ];
