@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\MeilisearchService;
 use App\Services\WahaService;
 use App\Socialite\OpenAIProvider;
 use Illuminate\Support\ServiceProvider;
@@ -15,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(WahaService::class);
+        $this->app->singleton(MeilisearchService::class);
     }
 
     /**

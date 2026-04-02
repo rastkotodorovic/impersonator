@@ -21,6 +21,17 @@ class OpenAIService
         $this->model = $model;
     }
 
+    public static function forEmbeddings(): self
+    {
+        $apiKey = config('services.openai.api_key');
+
+        if (! $apiKey) {
+            throw new RuntimeException('OPENAI_API_KEY is not configured.');
+        }
+
+        return new self($apiKey);
+    }
+
     public static function forUser(User $user): self
     {
         $credential = $user->openaiCredential;
@@ -45,6 +56,18 @@ class OpenAIService
             ->withToken($this->apiKey)
             ->timeout(60)
             ->acceptJson();
+    }
+
+    public function embeddings(array $texts, ?string $model = null): array
+    {
+        $response = $this->client()->post('/embeddings', [
+            'model' => $model ?? config('services.openai.embedding_model', 'text-embedding-3-small'),
+            'input' => $texts,
+        ]);
+
+        $data = $response->json();
+
+        return array_map(fn ($item) => $item['embedding'], $data['data']);
     }
 
     public function chatCompletion(array $messages, ?string $model = null): string

@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Models\Message;
-use Illuminate\Support\Facades\DB;
 
 class MessageRetrievalService
 {
     protected int $maxContextChars = 12000; // ~3000 tokens
+
+    public function __construct(
+        protected MeilisearchService $meilisearch,
+    ) {}
 
     public function retrieveContext(string $incomingMessage, int $matchLimit = 15): array
     {
@@ -30,13 +33,33 @@ class MessageRetrievalService
 
     protected function searchMessages(string $query, int $limit): \Illuminate\Support\Collection
     {
+        // Embed the incoming message
+        $openai = OpenAIService::forEmbeddings();
+        $embeddings = $openai->embeddings([$query]);
+        $vector = $embeddings[0];
+
+        // Hybrid search: keyword (BM25) + vector similarity
+        $results = $this->meilisearch->search('messages', [
+            'q' => $query,
+            'vector' => $vector,
+            'hybrid' => [
+                'semanticRatio' => 0.7,
+                'embedder' => 'openai',
+            ],
+            'limit' => $limit,
+        ]);
+
+        $messageIds = array_column($results['hits'] ?? [], 'id');
+
+        if (empty($messageIds)) {
+            return collect();
+        }
+
+        // Load full messages from MySQL, preserving Meilisearch ranking
         return Message::select('messages.*', 'conversations.title as conversation_title')
-            ->selectRaw('MATCH(messages.content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance', [$query])
             ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
-            ->whereRaw('MATCH(messages.content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$query])
-            ->where('conversations.is_group_chat', false)
-            ->orderByDesc('relevance')
-            ->limit($limit)
+            ->whereIn('messages.id', $messageIds)
+            ->orderByRaw('FIELD(messages.id, ' . implode(',', $messageIds) . ')')
             ->get();
     }
 
