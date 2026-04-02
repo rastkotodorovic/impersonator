@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAutoReplyContactRequest;
 use App\Models\AutoReplyContact;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,12 +24,9 @@ class AutoReplyContactController extends Controller
         return view('whatsapp.auto-reply', compact('contacts', 'recentLogs'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreAutoReplyContactRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'phone_number' => ['required', 'string', 'max:20'],
-            'name' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $normalized = AutoReplyContact::normalizePhone($validated['phone_number']);
 

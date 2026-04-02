@@ -61,6 +61,18 @@ class ChatControllerTest extends TestCase
         ])->assertSessionHasErrors('message');
     }
 
+    public function test_send_validates_history_roles(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('chat.send'), [
+            'message' => 'Hello',
+            'history' => [
+                ['role' => 'tool', 'content' => 'invalid'],
+            ],
+        ])->assertSessionHasErrors('history.0.role');
+    }
+
     public function test_chat_navigation_link_exists(): void
     {
         $user = User::factory()->create();

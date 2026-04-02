@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SendChatRequest;
 use App\Services\OpenAIService;
-use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChatController extends Controller
 {
-    public function index()
+    protected const STREAM_HEADERS = [
+        'Content-Type' => 'text/event-stream',
+        'Cache-Control' => 'no-cache',
+        'Connection' => 'keep-alive',
+        'X-Accel-Buffering' => 'no',
+    ];
+
+    public function index(): View
     {
         $credential = auth()->user()->openaiCredential;
 
@@ -18,36 +26,20 @@ class ChatController extends Controller
         ]);
     }
 
-    public function send(Request $request): StreamedResponse
+    public function send(SendChatRequest $request): StreamedResponse
     {
-        $request->validate([
-            'message' => ['required', 'string', 'max:10000'],
-            'history' => ['array'],
-            'history.*.role' => ['required', 'string', 'in:user,assistant,system'],
-            'history.*.content' => ['required', 'string'],
-            'model' => ['nullable', 'string'],
-        ]);
-
         $user = auth()->user();
+        $validated = $request->validated();
 
         try {
             $service = OpenAIService::forUser($user);
         } catch (\RuntimeException $e) {
-            return new StreamedResponse(function () use ($e) {
-                echo 'data: '.json_encode(['error' => $e->getMessage()])."\n\n";
-                ob_flush();
-                flush();
-            }, 200, [
-                'Content-Type' => 'text/event-stream',
-                'Cache-Control' => 'no-cache',
-                'Connection' => 'keep-alive',
-                'X-Accel-Buffering' => 'no',
-            ]);
+            return $this->streamError($e->getMessage());
         }
 
-        $messages = $request->input('history', []);
-        $messages[] = ['role' => 'user', 'content' => $request->input('message')];
-        $model = $request->input('model');
+        $messages = $validated['history'] ?? [];
+        $messages[] = ['role' => 'user', 'content' => $validated['message']];
+        $model = $validated['model'] ?? null;
 
         return new StreamedResponse(function () use ($service, $messages, $model) {
             try {
@@ -64,11 +56,15 @@ class ChatController extends Controller
                 ob_flush();
                 flush();
             }
-        }, 200, [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'Connection' => 'keep-alive',
-            'X-Accel-Buffering' => 'no',
-        ]);
+        }, 200, self::STREAM_HEADERS);
+    }
+
+    protected function streamError(string $message): StreamedResponse
+    {
+        return new StreamedResponse(function () use ($message) {
+            echo 'data: '.json_encode(['error' => $message])."\n\n";
+            ob_flush();
+            flush();
+        }, 200, self::STREAM_HEADERS);
     }
 }

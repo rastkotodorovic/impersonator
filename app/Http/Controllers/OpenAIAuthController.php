@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveOpenAiApiKeyRequest;
 use App\Models\UserOpenaiCredential;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 
 class OpenAIAuthController extends Controller
@@ -36,17 +36,13 @@ class OpenAIAuthController extends Controller
         return redirect()->route('chat.index')->with('success', 'OpenAI account connected.');
     }
 
-    public function saveApiKey(Request $request): RedirectResponse
+    public function saveApiKey(SaveOpenAiApiKeyRequest $request): RedirectResponse
     {
-        $request->validate([
-            'api_key' => ['required', 'string', 'starts_with:sk-'],
-        ]);
-
         UserOpenaiCredential::updateOrCreate(
             ['user_id' => auth()->id()],
             [
                 'auth_method' => 'api_key',
-                'api_key' => $request->input('api_key'),
+                'api_key' => $request->validated('api_key'),
                 'oauth_access_token' => null,
                 'oauth_refresh_token' => null,
                 'oauth_token_expires_at' => null,
