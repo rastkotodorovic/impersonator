@@ -11,6 +11,8 @@ use RuntimeException;
 
 class OpenAIService
 {
+    public const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
+
     private string $apiKey;
 
     private string $model;
@@ -80,6 +82,29 @@ class OpenAIService
         $data = $response->json();
 
         return $data['choices'][0]['message']['content'] ?? '';
+    }
+
+    public function chatCompletionWithMetadata(array $messages, ?string $model = null): array
+    {
+        $resolvedModel = $model ?? $this->model;
+
+        $response = $this->client()->post('/chat/completions', [
+            'model' => $resolvedModel,
+            'messages' => $messages,
+        ]);
+
+        $data = $response->json();
+
+        return [
+            'content' => $data['choices'][0]['message']['content'] ?? '',
+            'usage' => $data['usage'] ?? null,
+            'model' => $data['model'] ?? $resolvedModel,
+        ];
+    }
+
+    public function modelName(): string
+    {
+        return $this->model;
     }
 
     public function streamChatCompletion(array $messages, ?string $model = null): Generator

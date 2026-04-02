@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AutoReplyContactController;
+use App\Http\Controllers\AiTraceController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\OpenAIAuthController;
 use App\Http\Controllers\ProfileController;
@@ -29,6 +30,7 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('auto-reply')->name('auto-reply.')->group(function () {
             Route::get('/', [AutoReplyContactController::class, 'index'])->name('index');
+            Route::get('/logs/{log}/trace', [AiTraceController::class, 'show'])->name('logs.trace');
             Route::post('/contacts', [AutoReplyContactController::class, 'store'])->name('contacts.store');
             Route::patch('/contacts/{contact}/toggle', [AutoReplyContactController::class, 'toggle'])->name('contacts.toggle');
             Route::delete('/contacts/{contact}', [AutoReplyContactController::class, 'destroy'])->name('contacts.destroy');

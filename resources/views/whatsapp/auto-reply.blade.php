@@ -127,6 +127,14 @@
                                     @if($log->context_messages_used)
                                         <p class="mt-1 text-xs text-gray-400">{{ $log->context_messages_used }} context messages used</p>
                                     @endif
+                                    @if($log->aiTrace)
+                                        <div class="mt-3">
+                                            <a href="{{ route('whatsapp.auto-reply.logs.trace', $log) }}"
+                                               class="inline-flex items-center rounded-md bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-700">
+                                                Visualize AI details
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>

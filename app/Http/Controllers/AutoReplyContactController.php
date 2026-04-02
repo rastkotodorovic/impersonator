@@ -17,6 +17,7 @@ class AutoReplyContactController extends Controller
             ->get();
 
         $recentLogs = $request->user()->whatsappMessageLogs()
+            ->with('aiTrace')
             ->latest()
             ->limit(50)
             ->get();

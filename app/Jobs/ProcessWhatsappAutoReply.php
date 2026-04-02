@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\User;
-use App\Models\WhatsappMessageLog;
 use App\Services\AutoReplyService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -36,16 +35,8 @@ class ProcessWhatsappAutoReply implements ShouldQueue
                 $this->sessionName,
                 $this->wahaMessageId,
             );
-        } catch (\Exception $e) {
-            WhatsappMessageLog::create([
-                'user_id' => $this->userId,
-                'contact_phone' => $this->senderPhone,
-                'direction' => 'outgoing',
-                'body' => '',
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
+        } catch (\Throwable $exception) {
+            throw $exception;
         }
     }
 }

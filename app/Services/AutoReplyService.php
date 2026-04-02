@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AiTrace;
 use App\Models\User;
 use App\Models\WhatsappMessageLog;
 
@@ -30,41 +31,83 @@ class AutoReplyService
             'waha_message_id' => $wahaMessageId,
         ]);
 
-        // RAG retrieval
-        $context = $this->retrieval->retrieveContext($incomingMessage);
-
-        // Recent WhatsApp conversation history with this contact
-        $recentConversation = $this->loadRecentConversation(
-            $user,
-            $senderPhone,
-            $incomingLog->id,
-        );
-
-        // Build LLM prompt
-        $messages = $this->buildPrompt(
-            $user->name,
-            $senderPhone,
-            $incomingMessage,
-            $context,
-            $recentConversation,
-        );
-
-        // Generate reply via OpenAI
-        $openai = OpenAIService::forUser($user);
-        $reply = $openai->chatCompletion($messages);
-
-        // Send reply via WAHA
-        $chatId = $senderPhone . '@s.whatsapp.net';
-        $this->waha->sendMessage($sessionName, $chatId, $reply);
-
-        // Log outgoing message
-        return WhatsappMessageLog::create([
+        $trace = AiTrace::create([
             'user_id' => $user->id,
             'contact_phone' => $senderPhone,
-            'direction' => 'outgoing',
-            'body' => $reply,
-            'context_messages_used' => $context['count'],
+            'incoming_whatsapp_message_log_id' => $incomingLog->id,
+            'status' => 'processing',
+            'input_message' => $incomingMessage,
+            'retrieval_query' => $incomingMessage,
         ]);
+
+        try {
+            $context = $this->retrieval->retrieveContext($incomingMessage);
+
+            $recentConversation = $this->loadRecentConversation(
+                $user,
+                $senderPhone,
+                $incomingLog->id,
+            );
+
+            $messages = $this->buildPrompt(
+                $user->name,
+                $senderPhone,
+                $incomingMessage,
+                $context,
+                $recentConversation,
+            );
+
+            $trace->update([
+                'recent_conversation' => $recentConversation,
+                'retrieval_hits' => $context['hits'],
+                'context_snippets' => $context['snippet_blocks'],
+                'final_prompt' => $messages,
+            ]);
+
+            $openai = OpenAIService::forUser($user);
+            $startedAt = microtime(true);
+            $completion = $openai->chatCompletionWithMetadata($messages);
+            $latencyMs = (int) round((microtime(true) - $startedAt) * 1000);
+            $reply = $completion['content'];
+
+            $chatId = $senderPhone . '@s.whatsapp.net';
+            $this->waha->sendMessage($sessionName, $chatId, $reply);
+
+            $outgoingLog = WhatsappMessageLog::create([
+                'user_id' => $user->id,
+                'contact_phone' => $senderPhone,
+                'direction' => 'outgoing',
+                'body' => $reply,
+                'context_messages_used' => $context['count'],
+            ]);
+
+            $trace->update([
+                'outgoing_whatsapp_message_log_id' => $outgoingLog->id,
+                'status' => 'completed',
+                'model' => $completion['model'] ?? $openai->modelName(),
+                'model_response' => $reply,
+                'usage' => $completion['usage'],
+                'latency_ms' => $latencyMs,
+            ]);
+
+            return $outgoingLog;
+        } catch (\Throwable $exception) {
+            $outgoingLog = WhatsappMessageLog::create([
+                'user_id' => $user->id,
+                'contact_phone' => $senderPhone,
+                'direction' => 'outgoing',
+                'body' => '',
+                'error' => $exception->getMessage(),
+            ]);
+
+            $trace->update([
+                'outgoing_whatsapp_message_log_id' => $outgoingLog->id,
+                'status' => 'failed',
+                'error' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
+        }
     }
 
     protected function buildPrompt(

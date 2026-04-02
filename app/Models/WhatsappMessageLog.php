@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WhatsappMessageLog extends Model
 {
@@ -22,5 +23,10 @@ class WhatsappMessageLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function aiTrace(): HasOne
+    {
+        return $this->hasOne(AiTrace::class, 'outgoing_whatsapp_message_log_id');
     }
 }

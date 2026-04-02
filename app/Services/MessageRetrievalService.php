@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Message;
+use Illuminate\Support\Collection;
 
 class MessageRetrievalService
 {
@@ -14,34 +15,38 @@ class MessageRetrievalService
 
     public function retrieveContext(string $incomingMessage, int $matchLimit = 15): array
     {
-        $matches = $this->searchMessages($incomingMessage, $matchLimit);
+        $search = $this->searchMessages($incomingMessage, $matchLimit);
+        $matches = $search['matches'];
 
         if ($matches->isEmpty()) {
             return [
                 'snippets' => '',
                 'count' => 0,
+                'hits' => [],
+                'snippet_blocks' => [],
             ];
         }
 
-        $snippets = $this->buildContextSnippets($matches);
+        $snippets = $this->buildContextSnippets($matches, $search['raw_hits']);
 
         return [
-            'snippets' => $snippets,
+            'snippets' => $snippets['text'],
             'count' => $matches->count(),
+            'hits' => $this->buildTraceHits($matches, $search['raw_hits']),
+            'snippet_blocks' => $snippets['blocks'],
         ];
     }
 
-    protected function searchMessages(string $query, int $limit): \Illuminate\Support\Collection
+    protected function searchMessages(string $query, int $limit): array
     {
-        // Embed the incoming message
         $openai = OpenAIService::forEmbeddings();
         $embeddings = $openai->embeddings([$query]);
         $vector = $embeddings[0];
 
-        // Hybrid search: keyword (BM25) + vector similarity
         $results = $this->meilisearch->search('messages', [
             'q' => $query,
             'vector' => $vector,
+            'showRankingScore' => true,
             'hybrid' => [
                 'semanticRatio' => 0.7,
                 'embedder' => 'openai',
@@ -52,23 +57,29 @@ class MessageRetrievalService
         $messageIds = array_column($results['hits'] ?? [], 'id');
 
         if (empty($messageIds)) {
-            return collect();
+            return [
+                'matches' => collect(),
+                'raw_hits' => [],
+            ];
         }
 
-        // Load full messages from MySQL, preserving Meilisearch ranking
-        return Message::select('messages.*', 'conversations.title as conversation_title')
-            ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
-            ->whereIn('messages.id', $messageIds)
-            ->orderByRaw('FIELD(messages.id, ' . implode(',', $messageIds) . ')')
-            ->get();
+        return [
+            'matches' => Message::select('messages.*', 'conversations.title as conversation_title')
+                ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
+                ->whereIn('messages.id', $messageIds)
+                ->orderByRaw('FIELD(messages.id, ' . implode(',', $messageIds) . ')')
+                ->get(),
+            'raw_hits' => $results['hits'] ?? [],
+        ];
     }
 
-    protected function buildContextSnippets(\Illuminate\Support\Collection $matches): string
+    protected function buildContextSnippets(Collection $matches, array $rawHits): array
     {
         $snippets = [];
+        $blocks = [];
         $totalChars = 0;
+        $rawHitsById = collect($rawHits)->keyBy('id');
 
-        // Group matches by conversation and fetch surrounding context
         $grouped = $matches->groupBy('conversation_id');
 
         foreach ($grouped as $conversationId => $conversationMatches) {
@@ -82,20 +93,63 @@ class MessageRetrievalService
                 $window = $this->getSurroundingMessages($match->conversation_id, $match->sent_at, 3);
 
                 $snippet = "Conversation with {$title}:\n";
+                $windowMessages = [];
                 foreach ($window as $msg) {
                     $line = "[{$msg->sender_name}]: {$msg->content}";
                     $snippet .= $line . "\n";
+                    $windowMessages[] = [
+                        'id' => $msg->id,
+                        'sender_name' => $msg->sender_name,
+                        'content' => $msg->content,
+                        'sent_at' => $msg->sent_at,
+                    ];
                 }
 
                 $totalChars += strlen($snippet);
                 $snippets[] = $snippet;
+                $rawHit = $rawHitsById->get($match->id, []);
+                $blocks[] = [
+                    'conversation_id' => $conversationId,
+                    'conversation_title' => $title,
+                    'matched_message' => [
+                        'id' => $match->id,
+                        'sender_name' => $match->sender_name,
+                        'content' => $match->content,
+                        'sent_at' => $match->sent_at,
+                        'ranking_score' => $rawHit['_rankingScore'] ?? null,
+                    ],
+                    'messages' => $windowMessages,
+                ];
             }
         }
 
-        return implode("\n---\n\n", $snippets);
+        return [
+            'text' => implode("\n---\n\n", $snippets),
+            'blocks' => $blocks,
+        ];
     }
 
-    protected function getSurroundingMessages(int $conversationId, string $sentAt, int $radius): \Illuminate\Support\Collection
+    protected function buildTraceHits(Collection $matches, array $rawHits): array
+    {
+        $rawHitsById = collect($rawHits)->keyBy('id');
+
+        return $matches->values()->map(function (Message $match, int $index) use ($rawHitsById) {
+            $rawHit = $rawHitsById->get($match->id, []);
+
+            return [
+                'rank' => $index + 1,
+                'message_id' => $match->id,
+                'conversation_id' => $match->conversation_id,
+                'conversation_title' => $match->conversation_title,
+                'sender_name' => $match->sender_name,
+                'content' => $match->content,
+                'sent_at' => $match->sent_at,
+                'ranking_score' => $rawHit['_rankingScore'] ?? null,
+            ];
+        })->all();
+    }
+
+    protected function getSurroundingMessages(int $conversationId, string $sentAt, int $radius): Collection
     {
         $before = Message::where('conversation_id', $conversationId)
             ->where('sent_at', '<=', $sentAt)

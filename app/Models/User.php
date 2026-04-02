@@ -51,4 +51,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(WhatsappMessageLog::class);
     }
+
+    public function aiTraces(): HasMany
+    {
+        return $this->hasMany(AiTrace::class);
+    }
 }
