@@ -212,7 +212,8 @@ class WhatsappController extends Controller
         // Normalize: strip @s.whatsapp.net, @c.us, or @lid suffix
         $normalizedPhone = preg_replace('/@.*$/', '', $from);
         $contact = AutoReplyContact::where('user_id', $user->id)
-            ->where('phone_number', $normalizedPhone)
+            ->where('channel', 'whatsapp')
+            ->where('identifier', $normalizedPhone)
             ->where('is_active', true)
             ->first();
 

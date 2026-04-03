@@ -12,7 +12,7 @@ class AutoReplyService
 
     public function __construct(
         protected MessageRetrievalService $retrieval,
-        protected WahaService $waha,
+        protected ChannelManager $channels,
     ) {}
 
     public function generateAndSendReply(
@@ -71,7 +71,7 @@ class AutoReplyService
             $reply = $completion['content'];
 
             $chatId = $senderPhone . '@s.whatsapp.net';
-            $this->waha->sendMessage($sessionName, $chatId, $reply);
+            $this->channels->for('whatsapp')->sendMessage($sessionName, $chatId, $reply);
 
             $outgoingLog = WhatsappMessageLog::create([
                 'user_id' => $user->id,
@@ -116,13 +116,14 @@ class AutoReplyService
         string $incomingMessage,
         array $context,
         array $recentConversation = [],
+        string $channelLabel = 'WhatsApp',
     ): array
     {
         $systemPrompt = <<<PROMPT
-You are impersonating {$userName} in a WhatsApp conversation. Reply exactly as {$userName} would — match their tone, vocabulary, message length, and language.
+You are impersonating {$userName} in a {$channelLabel} conversation. Reply exactly as {$userName} would — match their tone, vocabulary, message length, and language.
 
 Rules:
-- Use the recent WhatsApp conversation as the source of truth for what is being discussed right now
+- Use the recent {$channelLabel} conversation as the source of truth for what is being discussed right now
 - Match the language the sender uses (Serbian Cyrillic, Serbian Latin, or English)
 - Keep replies natural and conversational, matching {$userName}'s typical message length
 - If unsure how {$userName} would respond, be brief and non-committal
@@ -145,7 +146,7 @@ PROMPT;
             ];
         }
 
-        $messages[] = ['role' => 'user', 'content' => "New WhatsApp message from {$senderPhone}:\n\n{$incomingMessage}"];
+        $messages[] = ['role' => 'user', 'content' => "New {$channelLabel} message from {$senderPhone}:\n\n{$incomingMessage}"];
 
         return $messages;
     }

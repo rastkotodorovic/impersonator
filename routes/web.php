@@ -5,6 +5,7 @@ use App\Http\Controllers\AiTraceController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\OpenAIAuthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\WhatsappController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,12 @@ Route::middleware('auth')->group(function () {
         });
     });
 
+    Route::prefix('telegram')->name('telegram.')->group(function () {
+        Route::get('/', [TelegramController::class, 'index'])->name('index');
+        Route::post('/connect', [TelegramController::class, 'connect'])->name('connect');
+        Route::post('/disconnect', [TelegramController::class, 'disconnect'])->name('disconnect');
+    });
+
     Route::prefix('openai')->name('openai.')->group(function () {
         Route::get('/redirect', [OpenAIAuthController::class, 'redirect'])->name('redirect');
         Route::get('/callback', [OpenAIAuthController::class, 'callback'])->name('callback');
@@ -51,5 +58,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::post('/webhooks/whatsapp', [WhatsappController::class, 'webhook'])->name('whatsapp.webhook');
+Route::post('/webhooks/telegram/{secret}', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 
 require __DIR__.'/auth.php';

@@ -5,8 +5,8 @@ namespace Tests\Unit;
 use App\Models\User;
 use App\Models\WhatsappMessageLog;
 use App\Services\AutoReplyService;
+use App\Services\ChannelManager;
 use App\Services\MessageRetrievalService;
-use App\Services\WahaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -63,7 +63,7 @@ class AutoReplyServiceTest extends TestCase
 
         $service = new TestableAutoReplyService(
             $this->mock(MessageRetrievalService::class),
-            $this->mock(WahaService::class),
+            $this->mock(ChannelManager::class),
         );
 
         $history = $service->exposedLoadRecentConversation($user, '38164111222', $keptIncoming->id);
@@ -77,7 +77,7 @@ class AutoReplyServiceTest extends TestCase
     {
         $service = new TestableAutoReplyService(
             $this->mock(MessageRetrievalService::class),
-            $this->mock(WahaService::class),
+            $this->mock(ChannelManager::class),
         );
 
         $messages = $service->exposedBuildPrompt(

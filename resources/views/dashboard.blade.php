@@ -7,9 +7,27 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{ __("You're logged in!") }}
+            <div class="grid gap-6 md:grid-cols-2">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-medium text-gray-900">WhatsApp</h3>
+                        <p class="mt-2 text-sm text-gray-500">Connect a WAHA-backed WhatsApp session and manage auto-reply contacts.</p>
+                        <a href="{{ route('whatsapp.index') }}"
+                           class="mt-4 inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                            Open WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-medium text-gray-900">Telegram</h3>
+                        <p class="mt-2 text-sm text-gray-500">Connect a Telegram bot, whitelist users, and reuse the same AI auto-reply flow.</p>
+                        <a href="{{ route('telegram.index') }}"
+                           class="mt-4 inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">
+                            Open Telegram
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

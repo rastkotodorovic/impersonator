@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Services\MeilisearchService;
+use App\Services\TelegramService;
 use App\Services\WahaService;
+use App\Services\Channels\TelegramChannel;
+use App\Services\Channels\WhatsappChannel;
 use App\Socialite\OpenAIProvider;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Contracts\Factory;
@@ -16,7 +19,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(WahaService::class);
+        $this->app->singleton(TelegramService::class);
         $this->app->singleton(MeilisearchService::class);
+        $this->app->singleton(WhatsappChannel::class);
+        $this->app->singleton(TelegramChannel::class);
     }
 
     /**

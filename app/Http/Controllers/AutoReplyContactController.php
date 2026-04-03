@@ -13,14 +13,26 @@ class AutoReplyContactController extends Controller
     public function index(Request $request): View
     {
         $contacts = $request->user()->autoReplyContacts()
+            ->orderBy('channel')
             ->orderBy('name')
             ->get();
 
         $recentLogs = $request->user()->whatsappMessageLogs()
             ->with('aiTrace')
             ->latest()
-            ->limit(50)
-            ->get();
+            ->limit(25)
+            ->get()
+            ->map(fn ($log) => $log->setAttribute('channel', 'whatsapp'))
+            ->concat(
+                $request->user()->telegramMessageLogs()
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn ($log) => $log->setAttribute('channel', 'telegram'))
+            )
+            ->sortByDesc('created_at')
+            ->take(50)
+            ->values();
 
         return view('whatsapp.auto-reply', compact('contacts', 'recentLogs'));
     }
@@ -29,11 +41,15 @@ class AutoReplyContactController extends Controller
     {
         $validated = $request->validated();
 
-        $normalized = AutoReplyContact::normalizePhone($validated['phone_number']);
+        $normalized = AutoReplyContact::normalizeIdentifier($validated['channel'], $validated['identifier']);
 
         $request->user()->autoReplyContacts()->updateOrCreate(
-            ['phone_number' => $normalized],
             [
+                'channel' => $validated['channel'],
+                'identifier' => $normalized,
+            ],
+            [
+                'phone_number' => $normalized,
                 'name' => $validated['name'] ?? null,
                 'is_active' => true,
             ],

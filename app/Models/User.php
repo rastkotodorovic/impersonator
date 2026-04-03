@@ -37,6 +37,11 @@ class User extends Authenticatable
         return $this->hasOne(WhatsappSession::class);
     }
 
+    public function telegramBot(): HasOne
+    {
+        return $this->hasOne(TelegramBot::class);
+    }
+
     public function openaiCredential(): HasOne
     {
         return $this->hasOne(UserOpenaiCredential::class);
@@ -50,6 +55,11 @@ class User extends Authenticatable
     public function whatsappMessageLogs(): HasMany
     {
         return $this->hasMany(WhatsappMessageLog::class);
+    }
+
+    public function telegramMessageLogs(): HasMany
+    {
+        return $this->hasMany(TelegramMessageLog::class);
     }
 
     public function aiTraces(): HasMany
