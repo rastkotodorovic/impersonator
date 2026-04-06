@@ -1,0 +1,1 @@
+After code changes, run the relevant tests or `composer run test` when practical, format PHP with `./vendor/bin/pint`, and verify any affected async WhatsApp/webhook behavior together with queue processing. For documentation changes, verify README/setup steps still match `.env.example`, composer scripts, and current routes/services.
