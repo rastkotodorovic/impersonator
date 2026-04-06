@@ -51,11 +51,12 @@ class AutoReplyContactController extends Controller
             [
                 'phone_number' => $normalized,
                 'name' => $validated['name'] ?? null,
+                'ai_additional_instructions' => $validated['ai_additional_instructions'] ?? null,
                 'is_active' => true,
             ],
         );
 
-        return back()->with('success', 'Contact added to auto-reply list.');
+        return back()->with('success', 'Contact saved.');
     }
 
     public function toggle(Request $request, AutoReplyContact $contact): RedirectResponse

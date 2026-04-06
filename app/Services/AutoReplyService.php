@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AutoReplyContact;
 use App\Models\AiTrace;
 use App\Models\User;
 use App\Models\WhatsappMessageLog;
@@ -55,6 +56,7 @@ class AutoReplyService
                 $incomingMessage,
                 $context,
                 $recentConversation,
+                $this->resolveAdditionalInstructions($user, $senderPhone),
             );
 
             $trace->update([
@@ -116,6 +118,7 @@ class AutoReplyService
         string $incomingMessage,
         array $context,
         array $recentConversation = [],
+        ?string $additionalInstructions = null,
         string $channelLabel = 'WhatsApp',
     ): array
     {
@@ -135,6 +138,13 @@ PROMPT;
             ['role' => 'system', 'content' => $systemPrompt],
         ];
 
+        if ($additionalInstructions) {
+            $messages[] = [
+                'role' => 'system',
+                'content' => "Additional instructions for this {$channelLabel} contact only:\n{$additionalInstructions}",
+            ];
+        }
+
         if (! empty($recentConversation)) {
             $messages = array_merge($messages, $recentConversation);
         }
@@ -149,6 +159,15 @@ PROMPT;
         $messages[] = ['role' => 'user', 'content' => "New {$channelLabel} message from {$senderPhone}:\n\n{$incomingMessage}"];
 
         return $messages;
+    }
+
+    protected function resolveAdditionalInstructions(User $user, string $senderPhone): ?string
+    {
+        return AutoReplyContact::query()
+            ->where('user_id', $user->id)
+            ->where('channel', 'whatsapp')
+            ->where('identifier', $senderPhone)
+            ->value('ai_additional_instructions');
     }
 
     protected function loadRecentConversation(User $user, string $senderPhone, ?int $excludeLogId = null): array

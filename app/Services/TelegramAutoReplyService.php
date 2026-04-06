@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AutoReplyContact;
 use App\Models\TelegramBot;
 use App\Models\TelegramMessageLog;
 use App\Models\User;
@@ -42,6 +43,7 @@ class TelegramAutoReplyService
             $incomingMessage,
             $context,
             $recentConversation,
+            $this->resolveAdditionalInstructions($user, $contactIdentifier),
         );
 
         $openai = OpenAIService::forUser($user);
@@ -68,6 +70,7 @@ class TelegramAutoReplyService
         string $incomingMessage,
         array $context,
         array $recentConversation = [],
+        ?string $additionalInstructions = null,
     ): array {
         $systemPrompt = <<<PROMPT
 You are impersonating {$userName} in a Telegram conversation. Reply exactly as {$userName} would — match their tone, vocabulary, message length, and language.
@@ -85,6 +88,13 @@ PROMPT;
             ['role' => 'system', 'content' => $systemPrompt],
         ];
 
+        if ($additionalInstructions) {
+            $messages[] = [
+                'role' => 'system',
+                'content' => "Additional instructions for this Telegram contact only:\n{$additionalInstructions}",
+            ];
+        }
+
         if (! empty($recentConversation)) {
             $messages = array_merge($messages, $recentConversation);
         }
@@ -99,6 +109,15 @@ PROMPT;
         $messages[] = ['role' => 'user', 'content' => "New Telegram message from {$contactIdentifier}:\n\n{$incomingMessage}"];
 
         return $messages;
+    }
+
+    protected function resolveAdditionalInstructions(User $user, string $contactIdentifier): ?string
+    {
+        return AutoReplyContact::query()
+            ->where('user_id', $user->id)
+            ->where('channel', 'telegram')
+            ->where('identifier', $contactIdentifier)
+            ->value('ai_additional_instructions');
     }
 
     protected function loadRecentConversation(User $user, string $chatId, ?int $excludeLogId = null): array

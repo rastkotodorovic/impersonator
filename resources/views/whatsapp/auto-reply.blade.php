@@ -23,40 +23,56 @@
                         Add a WhatsApp number or Telegram username/chat ID to auto-reply to.
                     </p>
 
-                    <form method="POST" action="{{ route('whatsapp.auto-reply.contacts.store') }}" class="mt-4 flex items-end gap-4">
+                    <form method="POST" action="{{ route('whatsapp.auto-reply.contacts.store') }}" class="mt-4 space-y-4">
                         @csrf
-                        <div class="flex-1">
-                            <label for="channel" class="block text-sm font-medium text-gray-700">Channel</label>
-                            <select name="channel" id="channel"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
-                                <option value="whatsapp" @selected(old('channel', 'whatsapp') === 'whatsapp')>WhatsApp</option>
-                                <option value="telegram" @selected(old('channel') === 'telegram')>Telegram</option>
-                            </select>
-                            @error('channel')
+                        <div class="flex flex-col gap-4 md:flex-row md:items-end">
+                            <div class="flex-1">
+                                <label for="channel" class="block text-sm font-medium text-gray-700">Channel</label>
+                                <select name="channel" id="channel"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                                    <option value="whatsapp" @selected(old('channel', 'whatsapp') === 'whatsapp')>WhatsApp</option>
+                                    <option value="telegram" @selected(old('channel') === 'telegram')>Telegram</option>
+                                </select>
+                                @error('channel')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="flex-1">
+                                <label for="identifier" class="block text-sm font-medium text-gray-700">Identifier</label>
+                                <input type="text" name="identifier" id="identifier"
+                                       placeholder="381651234567 or @username"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                                       value="{{ old('identifier') }}" required>
+                                @error('identifier')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="flex-1">
+                                <label for="name" class="block text-sm font-medium text-gray-700">Name (optional)</label>
+                                <input type="text" name="name" id="name"
+                                       placeholder="e.g. Mom"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                                       value="{{ old('name') }}">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="ai_additional_instructions" class="block text-sm font-medium text-gray-700">Custom AI Instructions (optional)</label>
+                            <textarea name="ai_additional_instructions"
+                                      id="ai_additional_instructions"
+                                      rows="4"
+                                      placeholder="Only applied to this contact. Example: Reply in Serbian Latin, keep responses short, and do not mention pricing unless asked directly."
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">{{ old('ai_additional_instructions') }}</textarea>
+                            <p class="mt-1 text-xs text-gray-500">These instructions are appended to the system prompt only for this contact.</p>
+                            @error('ai_additional_instructions')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
-                        <div class="flex-1">
-                            <label for="identifier" class="block text-sm font-medium text-gray-700">Identifier</label>
-                            <input type="text" name="identifier" id="identifier"
-                                   placeholder="381651234567 or @username"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
-                                   value="{{ old('identifier') }}" required>
-                            @error('identifier')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                        <div>
+                            <button type="submit"
+                                    class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                                Save Contact
+                            </button>
                         </div>
-                        <div class="flex-1">
-                            <label for="name" class="block text-sm font-medium text-gray-700">Name (optional)</label>
-                            <input type="text" name="name" id="name"
-                                   placeholder="e.g. Mom"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
-                                   value="{{ old('name') }}">
-                        </div>
-                        <button type="submit"
-                                class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
-                            Add
-                        </button>
                     </form>
                 </div>
             </div>
@@ -76,6 +92,7 @@
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Channel</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Identifier</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Custom Prompt</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                                     </tr>
@@ -86,6 +103,13 @@
                                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">{{ $contact->channelLabel() }}</td>
                                             <td class="whitespace-nowrap px-4 py-3 text-sm font-mono text-gray-900">{{ $contact->identifier }}</td>
                                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ $contact->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-500">
+                                                @if($contact->ai_additional_instructions)
+                                                    <p class="max-w-md whitespace-pre-line">{{ \Illuminate\Support\Str::limit($contact->ai_additional_instructions, 140) }}</p>
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
                                             <td class="whitespace-nowrap px-4 py-3 text-sm">
                                                 @if($contact->is_active)
                                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Active</span>

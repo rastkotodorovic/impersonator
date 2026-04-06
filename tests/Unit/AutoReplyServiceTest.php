@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\AutoReplyContact;
 use App\Models\User;
 use App\Models\WhatsappMessageLog;
 use App\Services\AutoReplyService;
@@ -104,6 +105,56 @@ class AutoReplyServiceTest extends TestCase
         $this->assertSame('user', $messages[4]['role']);
         $this->assertStringContainsString("Cool, let's do 8pm", $messages[4]['content']);
     }
+
+    public function test_build_prompt_includes_contact_specific_instructions_when_present(): void
+    {
+        $service = new TestableAutoReplyService(
+            $this->mock(MessageRetrievalService::class),
+            $this->mock(ChannelManager::class),
+        );
+
+        $messages = $service->exposedBuildPrompt(
+            'Rastko',
+            '38164111222',
+            'Can we talk tomorrow?',
+            [
+                'snippets' => '',
+                'count' => 0,
+            ],
+            [],
+            'Reply in Serbian Latin and keep it brief.',
+        );
+
+        $this->assertCount(3, $messages);
+        $this->assertSame('system', $messages[1]['role']);
+        $this->assertStringContainsString('Additional instructions', $messages[1]['content']);
+        $this->assertStringContainsString('keep it brief', $messages[1]['content']);
+    }
+
+    public function test_resolve_additional_instructions_returns_contact_prompt(): void
+    {
+        $user = User::factory()->create();
+
+        AutoReplyContact::create([
+            'user_id' => $user->id,
+            'channel' => 'whatsapp',
+            'phone_number' => '38164111222',
+            'identifier' => '38164111222',
+            'name' => 'VIP',
+            'ai_additional_instructions' => 'Treat as VIP and answer formally.',
+            'is_active' => true,
+        ]);
+
+        $service = new TestableAutoReplyService(
+            $this->mock(MessageRetrievalService::class),
+            $this->mock(ChannelManager::class),
+        );
+
+        $this->assertSame(
+            'Treat as VIP and answer formally.',
+            $service->exposedResolveAdditionalInstructions($user, '38164111222')
+        );
+    }
 }
 
 class TestableAutoReplyService extends AutoReplyService
@@ -119,7 +170,13 @@ class TestableAutoReplyService extends AutoReplyService
         string $incomingMessage,
         array $context,
         array $recentConversation = [],
+        ?string $additionalInstructions = null,
     ): array {
-        return $this->buildPrompt($userName, $senderPhone, $incomingMessage, $context, $recentConversation);
+        return $this->buildPrompt($userName, $senderPhone, $incomingMessage, $context, $recentConversation, $additionalInstructions);
+    }
+
+    public function exposedResolveAdditionalInstructions(User $user, string $senderPhone): ?string
+    {
+        return $this->resolveAdditionalInstructions($user, $senderPhone);
     }
 }

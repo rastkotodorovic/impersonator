@@ -13,6 +13,7 @@ class AutoReplyContact extends Model
         'phone_number',
         'identifier',
         'name',
+        'ai_additional_instructions',
         'is_active',
     ];
 
