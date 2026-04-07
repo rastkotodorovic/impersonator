@@ -14,12 +14,16 @@ return new class extends Migration
         Schema::create('auto_reply_contacts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('channel')->default('whatsapp');
             $table->string('phone_number');
+            $table->string('identifier')->nullable();
             $table->string('name')->nullable();
+            $table->text('ai_additional_instructions')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['user_id', 'phone_number']);
+            $table->unique(['user_id', 'channel', 'identifier'], 'auto_reply_contacts_user_channel_identifier_unique');
+            $table->index(['user_id', 'channel', 'is_active']);
         });
     }
 

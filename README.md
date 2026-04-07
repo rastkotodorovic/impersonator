@@ -100,6 +100,7 @@ php artisan embeddings:generate --fresh
 - `/whatsapp/auto-reply` manages which contacts can receive automated replies
 - `/openai/*` manages OpenAI credentials
 - `/chat` provides a UI for testing prompt and reply behavior
+- `/imports/facebook` uploads a Facebook messages export and rebuilds embeddings automatically
 - `/webhooks/whatsapp` receives incoming WhatsApp events
 
 ## Development Notes
@@ -109,6 +110,7 @@ php artisan embeddings:generate --fresh
 - Put request and route behavior in `tests/Feature`
 - Put isolated service behavior in `tests/Unit`
 - When changing auto-reply behavior, verify queue processing and webhook handling together
+- Facebook imports run synchronously from the upload request and rebuild embeddings immediately after import
 
 ## License
 

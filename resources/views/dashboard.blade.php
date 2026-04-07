@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid gap-6 md:grid-cols-2">
+            <div class="grid gap-6 md:grid-cols-3">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
                         <h3 class="text-lg font-medium text-gray-900">WhatsApp</h3>
@@ -26,6 +26,17 @@
                         <a href="{{ route('telegram.index') }}"
                            class="mt-4 inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">
                             Open Telegram
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <h3 class="text-lg font-medium text-gray-900">Facebook Import</h3>
+                        <p class="mt-2 text-sm text-gray-500">Upload your Facebook messages export, import the history into PostgreSQL, and rebuild embeddings automatically.</p>
+                        <a href="{{ route('imports.facebook.index') }}"
+                           class="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Open Imports
                         </a>
                     </div>
                 </div>

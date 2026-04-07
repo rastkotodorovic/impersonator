@@ -47,7 +47,7 @@
                                 @enderror
                             </div>
                             <button type="submit"
-                                    class="inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">
+                                    class="inline-flex items-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2">
                                 Connect Telegram
                             </button>
                         </form>

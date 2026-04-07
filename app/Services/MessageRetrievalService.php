@@ -67,8 +67,9 @@ class MessageRetrievalService
             'matches' => Message::select('messages.*', 'conversations.title as conversation_title')
                 ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
                 ->whereIn('messages.id', $messageIds)
-                ->orderByRaw('FIELD(messages.id, ' . implode(',', $messageIds) . ')')
-                ->get(),
+                ->get()
+                ->sortBy(fn (Message $message) => array_search($message->id, $messageIds, true))
+                ->values(),
             'raw_hits' => $results['hits'] ?? [],
         ];
     }
@@ -96,7 +97,7 @@ class MessageRetrievalService
                 $windowMessages = [];
                 foreach ($window as $msg) {
                     $line = "[{$msg->sender_name}]: {$msg->content}";
-                    $snippet .= $line . "\n";
+                    $snippet .= $line."\n";
                     $windowMessages[] = [
                         'id' => $msg->id,
                         'sender_name' => $msg->sender_name,

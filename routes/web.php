@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\AutoReplyContactController;
 use App\Http\Controllers\AiTraceController;
+use App\Http\Controllers\AutoReplyContactController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\FacebookImportController;
 use App\Http\Controllers\OpenAIAuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TelegramController;
@@ -54,6 +55,11 @@ Route::middleware('auth')->group(function () {
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', [ChatController::class, 'index'])->name('index');
         Route::post('/send', [ChatController::class, 'send'])->name('send');
+    });
+
+    Route::prefix('imports')->name('imports.')->group(function () {
+        Route::get('/facebook', [FacebookImportController::class, 'index'])->name('facebook.index');
+        Route::post('/facebook', [FacebookImportController::class, 'store'])->name('facebook.store');
     });
 });
 
