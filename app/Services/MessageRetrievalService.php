@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 class MessageRetrievalService
@@ -13,9 +14,9 @@ class MessageRetrievalService
         protected MeilisearchService $meilisearch,
     ) {}
 
-    public function retrieveContext(string $incomingMessage, int $matchLimit = 15): array
+    public function retrieveContext(string $incomingMessage, ?User $user = null, int $matchLimit = 15): array
     {
-        $search = $this->searchMessages($incomingMessage, $matchLimit);
+        $search = $this->searchMessages($incomingMessage, $user, $matchLimit);
         $matches = $search['matches'];
 
         if ($matches->isEmpty()) {
@@ -37,9 +38,9 @@ class MessageRetrievalService
         ];
     }
 
-    protected function searchMessages(string $query, int $limit): array
+    protected function searchMessages(string $query, ?User $user, int $limit): array
     {
-        $openai = OpenAIService::forEmbeddings();
+        $openai = OpenAIService::forEmbeddings($user);
         $embeddings = $openai->embeddings([$query]);
         $vector = $embeddings[0];
 

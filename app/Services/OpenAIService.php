@@ -22,12 +22,21 @@ class OpenAIService
         $this->model = $model;
     }
 
-    public static function forEmbeddings(): self
+    public static function forEmbeddings(?User $user = null): self
     {
+        $credential = self::resolveCredential($user);
+
+        if ($credential) {
+            return new self(
+                $credential->getActiveToken(),
+                config('services.openai.default_model', 'gpt-4o')
+            );
+        }
+
         $apiKey = config('services.openai.api_key');
 
         if (! $apiKey) {
-            throw new RuntimeException('OPENAI_API_KEY is not configured.');
+            throw new RuntimeException('No valid OpenAI credential configured. Connect OpenAI in settings or set OPENAI_API_KEY as a fallback.');
         }
 
         return new self($apiKey);
@@ -35,14 +44,10 @@ class OpenAIService
 
     public static function forUser(User $user): self
     {
-        $credential = $user->openaiCredential;
+        $credential = self::resolveCredential($user);
 
-        if (! $credential || ! $credential->hasValidCredential()) {
+        if (! $credential) {
             throw new RuntimeException('No valid OpenAI credential configured.');
-        }
-
-        if ($credential->isOAuth() && $credential->isTokenExpired()) {
-            $credential = self::refreshOAuthToken($credential);
         }
 
         return new self(
@@ -134,5 +139,39 @@ class OpenAIService
         ]);
 
         return $credential->fresh();
+    }
+
+    protected static function resolveCredential(?User $user = null): ?UserOpenaiCredential
+    {
+        if ($user) {
+            return self::prepareCredential($user->openaiCredential);
+        }
+
+        foreach (UserOpenaiCredential::query()->latest('id')->get() as $credential) {
+            $preparedCredential = self::prepareCredential($credential);
+
+            if ($preparedCredential) {
+                return $preparedCredential;
+            }
+        }
+
+        return null;
+    }
+
+    protected static function prepareCredential(?UserOpenaiCredential $credential): ?UserOpenaiCredential
+    {
+        if (! $credential) {
+            return null;
+        }
+
+        if ($credential->isOAuth() && $credential->isTokenExpired()) {
+            $credential = self::refreshOAuthToken($credential);
+        }
+
+        if (! $credential->hasValidCredential()) {
+            return null;
+        }
+
+        return $credential;
     }
 }

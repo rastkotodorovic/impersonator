@@ -75,6 +75,7 @@ OPENAI_CLIENT_ID=
 OPENAI_CLIENT_SECRET=
 OPENAI_REDIRECT_URI=/openai/callback
 OPENAI_DEFAULT_MODEL=gpt-4o
+# Optional fallback for embeddings / CLI tasks when no OpenAI credential is connected in the app
 OPENAI_API_KEY=
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 

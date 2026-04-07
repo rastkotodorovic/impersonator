@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class MessageEmbeddingService
@@ -15,10 +16,10 @@ class MessageEmbeddingService
         protected MeilisearchService $meilisearch,
     ) {}
 
-    public function generate(bool $fresh = false, int $batchSize = 100): array
+    public function generate(bool $fresh = false, int $batchSize = 100, ?User $user = null): array
     {
         $this->indexed = 0;
-        $this->openai = OpenAIService::forEmbeddings();
+        $this->openai = OpenAIService::forEmbeddings($user);
 
         $this->setupIndex($fresh);
 

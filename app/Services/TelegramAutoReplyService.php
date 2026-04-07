@@ -35,7 +35,7 @@ class TelegramAutoReplyService
             'telegram_message_id' => $telegramMessageId,
         ]);
 
-        $context = $this->retrieval->retrieveContext($incomingMessage);
+        $context = $this->retrieval->retrieveContext($incomingMessage, $user);
         $recentConversation = $this->loadRecentConversation($user, $chatId, $incomingLog->id);
         $messages = $this->buildPrompt(
             $user->name,

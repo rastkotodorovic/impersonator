@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\AutoReplyContact;
 use App\Models\AiTrace;
+use App\Models\AutoReplyContact;
 use App\Models\User;
 use App\Models\WhatsappMessageLog;
 
@@ -42,7 +42,7 @@ class AutoReplyService
         ]);
 
         try {
-            $context = $this->retrieval->retrieveContext($incomingMessage);
+            $context = $this->retrieval->retrieveContext($incomingMessage, $user);
 
             $recentConversation = $this->loadRecentConversation(
                 $user,
@@ -72,7 +72,7 @@ class AutoReplyService
             $latencyMs = (int) round((microtime(true) - $startedAt) * 1000);
             $reply = $completion['content'];
 
-            $chatId = $senderPhone . '@s.whatsapp.net';
+            $chatId = $senderPhone.'@s.whatsapp.net';
             $this->channels->for('whatsapp')->sendMessage($sessionName, $chatId, $reply);
 
             $outgoingLog = WhatsappMessageLog::create([
@@ -120,8 +120,7 @@ class AutoReplyService
         array $recentConversation = [],
         ?string $additionalInstructions = null,
         string $channelLabel = 'WhatsApp',
-    ): array
-    {
+    ): array {
         $systemPrompt = <<<PROMPT
 You are impersonating {$userName} in a {$channelLabel} conversation. Reply exactly as {$userName} would — match their tone, vocabulary, message length, and language.
 
