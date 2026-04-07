@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\UserOpenaiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Socialite\Facades\Socialite;
 use Tests\TestCase;
 
 class OpenAIAuthControllerTest extends TestCase
@@ -20,7 +19,7 @@ class OpenAIAuthControllerTest extends TestCase
             'api_key' => 'sk-test-key-12345',
         ]);
 
-        $response->assertRedirect(route('chat.index'));
+        $response->assertRedirect(route('openai.index'));
         $this->assertDatabaseHas('user_openai_credentials', [
             'user_id' => $user->id,
             'auth_method' => 'api_key',
@@ -63,7 +62,7 @@ class OpenAIAuthControllerTest extends TestCase
 
         $response = $this->actingAs($user)->delete(route('openai.credential.destroy'));
 
-        $response->assertRedirect(route('chat.index'));
+        $response->assertRedirect(route('openai.index'));
         $this->assertDatabaseMissing('user_openai_credentials', [
             'user_id' => $user->id,
         ]);

@@ -14,7 +14,6 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 - Imports historical conversation data from a Facebook export
 - Generates embeddings and stores searchable message chunks in Meilisearch
 - Retrieves relevant past messages to build context for replies
-- Lets you test conversations in a chat UI before enabling automation
 - Supports auto-reply toggles for specific WhatsApp contacts
 - Supports OpenAI API key auth and OAuth-based credential flows
 
@@ -41,9 +40,9 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 
 - `app/Services` contains the main integration and orchestration logic
 - `app/Console/Commands` contains import and embedding generation commands
-- `app/Http/Controllers` contains WhatsApp, OpenAI, chat, and auto-reply flows
+- `app/Http/Controllers` contains WhatsApp, OpenAI, import, and auto-reply flows
 - `routes/web.php` defines the authenticated UI and webhook endpoints
-- `resources/views` contains the dashboard, WhatsApp, chat, and auth views
+- `resources/views` contains the dashboard, WhatsApp, Telegram, imports, OpenAI settings, and auth views
 - `docs/facebook-data-export.md` documents the expected import data format
 
 ## Requirements
@@ -98,8 +97,7 @@ php artisan embeddings:generate --fresh
 
 - `/whatsapp` manages WAHA connection, QR code retrieval, status, and disconnect flow
 - `/whatsapp/auto-reply` manages which contacts can receive automated replies
-- `/openai/*` manages OpenAI credentials
-- `/chat` provides a UI for testing prompt and reply behavior
+- `/openai` manages OpenAI credentials and connection settings
 - `/imports/facebook` uploads a Facebook messages export and rebuilds embeddings automatically
 - `/webhooks/whatsapp` receives incoming WhatsApp events
 

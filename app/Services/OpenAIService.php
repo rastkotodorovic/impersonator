@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\UserOpenaiCredential;
-use Generator;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -105,47 +104,6 @@ class OpenAIService
     public function modelName(): string
     {
         return $this->model;
-    }
-
-    public function streamChatCompletion(array $messages, ?string $model = null): Generator
-    {
-        $response = $this->client()
-            ->withOptions(['stream' => true])
-            ->post('/chat/completions', [
-                'model' => $model ?? $this->model,
-                'messages' => $messages,
-                'stream' => true,
-            ]);
-
-        $body = $response->getBody();
-        $buffer = '';
-
-        while (! $body->eof()) {
-            $buffer .= $body->read(1024);
-            $lines = explode("\n", $buffer);
-            $buffer = array_pop($lines);
-
-            foreach ($lines as $line) {
-                $line = trim($line);
-
-                if ($line === '' || $line === 'data: [DONE]') {
-                    if ($line === 'data: [DONE]') {
-                        return;
-                    }
-
-                    continue;
-                }
-
-                if (str_starts_with($line, 'data: ')) {
-                    $json = substr($line, 6);
-                    $data = json_decode($json, true);
-
-                    if ($data && isset($data['choices'][0]['delta']['content'])) {
-                        yield $data['choices'][0]['delta']['content'];
-                    }
-                }
-            }
-        }
     }
 
     public static function refreshOAuthToken(UserOpenaiCredential $credential): UserOpenaiCredential

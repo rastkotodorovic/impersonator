@@ -21,8 +21,8 @@
                     <x-nav-link :href="route('telegram.index')" :active="request()->routeIs('telegram.*')">
                         {{ __('Telegram') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.*')">
-                        {{ __('Chat') }}
+                    <x-nav-link :href="route('openai.index')" :active="request()->routeIs('openai.*')">
+                        {{ __('OpenAI') }}
                     </x-nav-link>
                     <x-nav-link :href="route('imports.facebook.index')" :active="request()->routeIs('imports.*')">
                         {{ __('Imports') }}
@@ -88,8 +88,8 @@
             <x-responsive-nav-link :href="route('telegram.index')" :active="request()->routeIs('telegram.*')">
                 {{ __('Telegram') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.*')">
-                {{ __('Chat') }}
+            <x-responsive-nav-link :href="route('openai.index')" :active="request()->routeIs('openai.*')">
+                {{ __('OpenAI') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('imports.facebook.index')" :active="request()->routeIs('imports.*')">
                 {{ __('Imports') }}

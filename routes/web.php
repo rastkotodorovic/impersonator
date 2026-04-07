@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\AiTraceController;
 use App\Http\Controllers\AutoReplyContactController;
-use App\Http\Controllers\ChatController;
 use App\Http\Controllers\FacebookImportController;
 use App\Http\Controllers\OpenAIAuthController;
+use App\Http\Controllers\OpenAISettingsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\WhatsappController;
@@ -46,15 +46,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('openai')->name('openai.')->group(function () {
+        Route::get('/', [OpenAISettingsController::class, 'index'])->name('index');
         Route::get('/redirect', [OpenAIAuthController::class, 'redirect'])->name('redirect');
         Route::get('/callback', [OpenAIAuthController::class, 'callback'])->name('callback');
         Route::post('/api-key', [OpenAIAuthController::class, 'saveApiKey'])->name('api-key.store');
         Route::delete('/credential', [OpenAIAuthController::class, 'removeCredential'])->name('credential.destroy');
-    });
-
-    Route::prefix('chat')->name('chat.')->group(function () {
-        Route::get('/', [ChatController::class, 'index'])->name('index');
-        Route::post('/send', [ChatController::class, 'send'])->name('send');
     });
 
     Route::prefix('imports')->name('imports.')->group(function () {

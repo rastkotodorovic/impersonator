@@ -33,7 +33,7 @@ class OpenAIAuthController extends Controller
             ]
         );
 
-        return redirect()->route('chat.index')->with('success', 'OpenAI account connected.');
+        return redirect()->route('openai.index')->with('success', 'OpenAI account connected.');
     }
 
     public function saveApiKey(SaveOpenAiApiKeyRequest $request): RedirectResponse
@@ -51,13 +51,13 @@ class OpenAIAuthController extends Controller
             ]
         );
 
-        return redirect()->route('chat.index')->with('success', 'API key saved.');
+        return redirect()->route('openai.index')->with('success', 'API key saved.');
     }
 
     public function removeCredential(): RedirectResponse
     {
         auth()->user()->openaiCredential?->delete();
 
-        return redirect()->route('chat.index')->with('success', 'OpenAI credential removed.');
+        return redirect()->route('openai.index')->with('success', 'OpenAI credential removed.');
     }
 }
