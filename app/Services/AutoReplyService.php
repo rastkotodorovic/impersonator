@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Integrations\OpenAI\OpenAIService;
+use App\Integrations\Waha\WahaService;
 use App\Models\AiTrace;
 use App\Models\AutoReplyContact;
 use App\Models\User;
@@ -15,6 +16,7 @@ class AutoReplyService
     public function __construct(
         protected MessageRetrievalService $retrieval,
         protected ChannelManager $channels,
+        protected WahaService $waha,
     ) {}
 
     public function generateAndSendReply(
@@ -41,6 +43,9 @@ class AutoReplyService
             'input_message' => $incomingMessage,
             'retrieval_query' => $incomingMessage,
         ]);
+
+        $chatId = $senderPhone.'@s.whatsapp.net';
+        $typingStarted = $this->safelyStartTyping($sessionName, $chatId);
 
         try {
             $context = $this->retrieval->retrieveContext($incomingMessage, $user);
@@ -73,7 +78,6 @@ class AutoReplyService
             $latencyMs = (int) round((microtime(true) - $startedAt) * 1000);
             $reply = $completion['content'];
 
-            $chatId = $senderPhone.'@s.whatsapp.net';
             $this->channels->for('whatsapp')->sendMessage($sessionName, $chatId, $reply);
 
             $outgoingLog = WhatsappMessageLog::create([
@@ -110,6 +114,30 @@ class AutoReplyService
             ]);
 
             throw $exception;
+        } finally {
+            if ($typingStarted) {
+                $this->safelyStopTyping($sessionName, $chatId);
+            }
+        }
+    }
+
+    protected function safelyStartTyping(string $sessionName, string $chatId): bool
+    {
+        try {
+            return $this->waha->startTyping($sessionName, $chatId);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return false;
+        }
+    }
+
+    protected function safelyStopTyping(string $sessionName, string $chatId): void
+    {
+        try {
+            $this->waha->stopTyping($sessionName, $chatId);
+        } catch (\Throwable $exception) {
+            report($exception);
         }
     }
 

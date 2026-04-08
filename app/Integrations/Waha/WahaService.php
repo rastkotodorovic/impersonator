@@ -13,8 +13,8 @@ class WahaService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('services.waha.api_url'), '/');
-        $this->apiKey = config('services.waha.api_key');
+        $this->baseUrl = rtrim((string) config('services.waha.api_url'), '/');
+        $this->apiKey = (string) config('services.waha.api_key');
     }
 
     protected function client(): PendingRequest
@@ -120,6 +120,26 @@ class WahaService
         ]);
 
         return $response->json();
+    }
+
+    public function startTyping(string $sessionName, string $chatId): bool
+    {
+        return $this->setPresence($sessionName, $chatId, 'typing');
+    }
+
+    public function stopTyping(string $sessionName, string $chatId): bool
+    {
+        return $this->setPresence($sessionName, $chatId, 'paused');
+    }
+
+    protected function setPresence(string $sessionName, string $chatId, string $presence): bool
+    {
+        $response = $this->client()->post("/api/{$sessionName}/presence", [
+            'chatId' => $chatId,
+            'presence' => $presence,
+        ]);
+
+        return $response->successful();
     }
 
     public function updateSessionWebhooks(string $sessionName, string $webhookUrl, array $events): array

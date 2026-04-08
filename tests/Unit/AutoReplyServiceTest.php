@@ -2,13 +2,17 @@
 
 namespace Tests\Unit;
 
+use App\Integrations\Waha\WahaService;
 use App\Models\AutoReplyContact;
 use App\Models\User;
+use App\Models\UserOpenaiCredential;
 use App\Models\WhatsappMessageLog;
 use App\Services\AutoReplyService;
 use App\Services\ChannelManager;
+use App\Services\Channels\WhatsappChannel;
 use App\Services\MessageRetrievalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AutoReplyServiceTest extends TestCase
@@ -155,10 +159,88 @@ class AutoReplyServiceTest extends TestCase
             $service->exposedResolveAdditionalInstructions($user, '38164111222')
         );
     }
+
+    public function test_generate_and_send_reply_toggles_typing_presence_around_reply(): void
+    {
+        config()->set('services.waha.api_url', 'http://waha.test');
+        config()->set('services.waha.api_key', null);
+
+        $user = User::factory()->create();
+
+        UserOpenaiCredential::create([
+            'user_id' => $user->id,
+            'auth_method' => 'api_key',
+            'api_key' => 'sk-test-key-12345',
+        ]);
+
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'On my way.']],
+                ],
+                'usage' => ['total_tokens' => 12],
+                'model' => 'gpt-4o',
+            ]),
+            'http://waha.test/api/default/presence' => Http::sequence()
+                ->push(['success' => true], 200)
+                ->push(['success' => true], 200),
+            'http://waha.test/api/sendText' => Http::response(['id' => 'msg-1'], 200),
+        ]);
+
+        $retrieval = $this->mock(MessageRetrievalService::class, function ($mock) use ($user) {
+            $mock->shouldReceive('retrieveContext')
+                ->once()
+                ->with('Where are you?', $user)
+                ->andReturn([
+                    'count' => 0,
+                    'hits' => [],
+                    'snippet_blocks' => [],
+                    'snippets' => '',
+                ]);
+        });
+
+        $service = new TestableAutoReplyService(
+            $retrieval,
+            new ChannelManager(new WhatsappChannel(new WahaService)),
+            new WahaService,
+        );
+
+        $outgoing = $service->generateAndSendReply($user, '38164111222', 'Where are you?', 'default');
+
+        $this->assertSame('outgoing', $outgoing->direction);
+        $this->assertSame('On my way.', $outgoing->body);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'http://waha.test/api/default/presence'
+                && $request['chatId'] === '38164111222@s.whatsapp.net'
+                && $request['presence'] === 'typing';
+        });
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'http://waha.test/api/sendText'
+                && $request['session'] === 'default'
+                && $request['chatId'] === '38164111222@s.whatsapp.net'
+                && $request['text'] === 'On my way.';
+        });
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'http://waha.test/api/default/presence'
+                && $request['chatId'] === '38164111222@s.whatsapp.net'
+                && $request['presence'] === 'paused';
+        });
+    }
 }
 
 class TestableAutoReplyService extends AutoReplyService
 {
+    public function __construct(
+        MessageRetrievalService $retrieval,
+        ChannelManager $channels,
+        ?WahaService $waha = null,
+    ) {
+        parent::__construct($retrieval, $channels, $waha ?? new WahaService);
+    }
+
     public function exposedLoadRecentConversation(User $user, string $senderPhone, ?int $excludeLogId = null): array
     {
         return $this->loadRecentConversation($user, $senderPhone, $excludeLogId);
