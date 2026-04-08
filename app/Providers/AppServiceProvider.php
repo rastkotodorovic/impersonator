@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Services\MeilisearchService;
-use App\Services\WahaService;
+use App\Integrations\Meilisearch\MeilisearchService;
+use App\Integrations\Waha\WahaService;
 use App\Services\Channels\WhatsappChannel;
 use App\Socialite\OpenAIProvider;
 use Illuminate\Support\ServiceProvider;

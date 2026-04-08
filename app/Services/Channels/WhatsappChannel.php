@@ -3,7 +3,7 @@
 namespace App\Services\Channels;
 
 use App\Contracts\MessageChannelInterface;
-use App\Services\WahaService;
+use App\Integrations\Waha\WahaService;
 
 class WhatsappChannel implements MessageChannelInterface
 {

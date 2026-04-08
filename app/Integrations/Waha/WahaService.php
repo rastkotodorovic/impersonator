@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Integrations\Waha;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;

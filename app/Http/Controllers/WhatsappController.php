@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Integrations\Waha\WahaService;
 use App\Jobs\ProcessWhatsappAutoReply;
 use App\Models\AutoReplyContact;
 use App\Models\WhatsappMessageLog;
 use App\Models\WhatsappSession;
-use App\Services\WahaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

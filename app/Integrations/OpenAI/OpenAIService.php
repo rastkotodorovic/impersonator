@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Integrations\OpenAI;
 
 use App\Models\User;
 use App\Models\UserOpenaiCredential;

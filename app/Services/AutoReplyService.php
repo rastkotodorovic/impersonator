@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Integrations\OpenAI\OpenAIService;
 use App\Models\AiTrace;
 use App\Models\AutoReplyContact;
 use App\Models\User;

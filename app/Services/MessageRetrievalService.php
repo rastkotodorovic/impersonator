@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Integrations\Meilisearch\MeilisearchService;
+use App\Integrations\OpenAI\OpenAIService;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Collection;

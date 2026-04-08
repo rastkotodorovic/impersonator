@@ -1,6 +1,9 @@
 Impersonator is a Laravel 13 application for AI-assisted WhatsApp message replies. It combines webhook ingestion, queued auto-reply jobs, retrieval over imported message history, and OpenAI-generated responses. Treat changes as part of a message-processing pipeline rather than isolated controller work.
+- Stack summary: Laravel 13, PHP 8.3, Blade, Alpine.js, Tailwind CSS, Vite, Laravel Breeze, WAHA, OpenAI, and Meilisearch.
+- Runtime defaults matter here: WhatsApp state is persisted in the database, queues are database-backed, and public webhooks drive the reply pipeline.
 - `app/Http/Controllers` handles UI actions, webhook entrypoints, and auth flows. Keep controllers thin and move orchestration into services.
-- `app/Services` contains the core business logic and third-party integrations, including WAHA, OpenAI, Meilisearch, prompt building, and channel abstractions.
+- `app/Services` contains the core business logic, prompt building, and channel abstractions.
+- `app/Integrations` contains third-party clients such as WAHA, OpenAI, and Meilisearch.
 - `app/Services/Channels` and `app/Contracts/MessageChannelInterface` define send behavior. If you add or change channel support, update the shared abstractions and the concrete channel implementations together.
 - `app/Jobs` contains async processing for inbound auto-replies. Changes that affect reply generation usually also affect queue jobs, webhook handlers, and logging/tracing models.
 - `app/Models` includes message logs, traces, conversations, credentials, sessions, and auto-reply contact state. Preserve existing naming and relationships when extending data flow.
@@ -8,6 +11,7 @@ Impersonator is a Laravel 13 application for AI-assisted WhatsApp message replie
 - `resources/views` contains Blade UI for WhatsApp, chat testing, OpenAI credential flows, and trace/log screens.
 - `docs/` stores import-format and operational notes. Add or update docs here when changing import expectations or operator workflows.
 Understand these flows before editing related code:
+- WhatsApp connection flow: `/whatsapp` creates or resumes a WAHA session, the UI polls `/whatsapp/qr-code`, WAHA posts `session.status` updates to `/webhooks/whatsapp`, and the app maps WAHA states into `WhatsappSession` records.
 - WhatsApp auto-reply flow: webhook -> controller -> queued job -> `AutoReplyService` -> retrieval/context building -> channel send -> message log / AI trace updates.
 - Chat testing flow in `ChatController` should stay consistent with the prompt-building logic used for automated replies when appropriate.
 - Import and embedding flow depends on historical message ingestion plus `php artisan embeddings:generate --fresh` to rebuild retrieval data.
@@ -19,6 +23,7 @@ Core application code lives in `app/`. Use these conventions:
 - Queue jobs: `app/Jobs`
 - Console commands: `app/Console/Commands`
 - Eloquent models: `app/Models`
+- Key models for WhatsApp work: `User`, `WhatsappSession`, `WhatsappMessageLog`, `AiTrace`, `AutoReplyContact`, `Conversation`, and `Message`
 - Routes: `routes/`
 - Blade views and frontend assets: `resources/`
 - Migrations, factories, seeders: `database/`
