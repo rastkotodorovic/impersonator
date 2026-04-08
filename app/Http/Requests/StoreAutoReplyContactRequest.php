@@ -14,7 +14,6 @@ class StoreAutoReplyContactRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'channel' => ['required', 'in:whatsapp,telegram'],
             'identifier' => ['required', 'string', 'max:255'],
             'name' => ['nullable', 'string', 'max:255'],
             'ai_additional_instructions' => ['nullable', 'string', 'max:2000'],

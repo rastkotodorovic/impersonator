@@ -34,21 +34,13 @@ class AutoReplyContact extends Model
         return preg_replace('/@.*$/', '', $phone);
     }
 
-    public static function normalizeIdentifier(string $channel, string $value): string
+    public static function normalizeIdentifier(string $value): string
     {
-        return match ($channel) {
-            'telegram' => strtolower(ltrim(trim($value), '@')),
-            default => static::normalizePhone($value),
-        };
+        return static::normalizePhone($value);
     }
 
     public function wahaPhone(): string
     {
         return $this->phone_number . '@s.whatsapp.net';
-    }
-
-    public function channelLabel(): string
-    {
-        return $this->channel === 'telegram' ? 'Telegram' : 'WhatsApp';
     }
 }

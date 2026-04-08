@@ -144,7 +144,7 @@
                                             <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($latestRun->messages_skipped ?? 0) }}</p>
                                         </div>
                                         <div class="rounded-md bg-white p-3 ring-1 ring-gray-200">
-                                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Conversations</p>
+                                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Convers.</p>
                                             <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($latestRun->conversations_count ?? 0) }}</p>
                                         </div>
                                     </div>

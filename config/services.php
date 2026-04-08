@@ -41,10 +41,6 @@ return [
         'session_name' => env('WAHA_SESSION_NAME', 'default'),
     ],
 
-    'telegram' => [
-        'api_url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
-    ],
-
     'openai' => [
         'client_id' => env('OPENAI_CLIENT_ID'),
         'client_secret' => env('OPENAI_CLIENT_SECRET'),

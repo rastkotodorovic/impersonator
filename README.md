@@ -42,7 +42,7 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 - `app/Console/Commands` contains import and embedding generation commands
 - `app/Http/Controllers` contains WhatsApp, OpenAI, import, and auto-reply flows
 - `routes/web.php` defines the authenticated UI and webhook endpoints
-- `resources/views` contains the dashboard, WhatsApp, Telegram, imports, OpenAI settings, and auth views
+- `resources/views` contains the dashboard, WhatsApp, imports, OpenAI settings, and auth views
 - `docs/facebook-data-export.md` documents the expected import data format
 
 ## Requirements
