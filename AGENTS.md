@@ -1,9 +1,9 @@
 Impersonator is a Laravel 13 application for AI-assisted WhatsApp message replies. It combines webhook ingestion, queued auto-reply jobs, retrieval over imported message history, and OpenAI-generated responses. Treat changes as part of a message-processing pipeline rather than isolated controller work.
-- Stack summary: Laravel 13, PHP 8.3, Blade, Alpine.js, Tailwind CSS, Vite, Laravel Breeze, WAHA, OpenAI, and Meilisearch.
+- Stack summary: Laravel 13, PHP 8.3, Blade, Alpine.js, Tailwind CSS, Vite, Laravel Breeze, WAHA, OpenAI, PostgreSQL, and pgvector.
 - Runtime defaults matter here: WhatsApp state is persisted in the database, queues are database-backed, and public webhooks drive the reply pipeline.
 - `app/Http/Controllers` handles UI actions, webhook entrypoints, and auth flows. Keep controllers thin and move orchestration into services.
 - `app/Services` contains the core business logic, prompt building, and channel abstractions.
-- `app/Integrations` contains third-party clients such as WAHA, OpenAI, and Meilisearch.
+- `app/Integrations` contains third-party clients such as WAHA, OpenAI, and pgvector-backed retrieval helpers.
 - `app/Services/Channels` and `app/Contracts/MessageChannelInterface` define send behavior. If you add or change channel support, update the shared abstractions and the concrete channel implementations together.
 - `app/Jobs` contains async processing for inbound auto-replies. Changes that affect reply generation usually also affect queue jobs, webhook handlers, and logging/tracing models.
 - `app/Models` includes message logs, traces, conversations, credentials, sessions, and auto-reply contact state. Preserve existing naming and relationships when extending data flow.
@@ -19,11 +19,12 @@ Understand these flows before editing related code:
 Core application code lives in `app/`. Use these conventions:
 - HTTP controllers: `app/Http/Controllers`
 - Form requests: `app/Http/Requests`
-- Services and integrations: `app/Services`
+- Services: `app/Services`
+- Integrations: `app/Integrations`
 - Queue jobs: `app/Jobs`
 - Console commands: `app/Console/Commands`
 - Eloquent models: `app/Models`
-- Key models for WhatsApp work: `User`, `WhatsappSession`, `WhatsappMessageLog`, `AiTrace`, `AutoReplyContact`, `Conversation`, and `Message`
+- Key models for WhatsApp work: `User`, `WhatsappSession`, `WhatsappMessageLog`, `AiTrace`, `AutoReplyContact`, `Conversation`, `Message`, and `MessageEmbedding`
 - Routes: `routes/`
 - Blade views and frontend assets: `resources/`
 - Migrations, factories, seeders: `database/`
@@ -38,7 +39,7 @@ Core application code lives in `app/`. Use these conventions:
 This app depends on several external systems configured through `.env` and `config/services.php`:
 - WAHA for WhatsApp session management and message sending
 - OpenAI for embeddings and reply generation
-- Meilisearch for semantic retrieval
+- PostgreSQL with pgvector for semantic retrieval
 - Database-backed queues for async auto-replies
 When changing integration behavior:
 - Verify expected request/response shapes before changing service methods.
@@ -47,7 +48,8 @@ When changing integration behavior:
 - Never commit secrets from `.env`, auth exports, or imported personal message history.
 Use the existing scripts first:
 - `composer run setup` installs dependencies, prepares `.env`, generates the app key, runs migrations, and builds frontend assets.
-- `./vendor/bin/sail up -d` starts Docker-backed services such as Postgres, Meilisearch, and WAHA when using Sail.
+- `./vendor/bin/sail up -d` starts Docker-backed services such as Postgres and WAHA when using Sail.
+- After switching an existing environment to pgvector, recreate the `pgsql` container so the `vector` extension is available before running migrations or tests.
 - `composer run dev` runs the Laravel server, queue worker, log tailer, and Vite dev server concurrently.
 - `composer run test` clears config and runs the full test suite.
 - `php artisan test tests/Unit/AutoReplyServiceTest.php` runs a focused test file.

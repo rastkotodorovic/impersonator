@@ -6,13 +6,13 @@
 
 Impersonator is a Laravel application that experiments with AI-assisted WhatsApp auto-replies using your own historical message data.
 
-The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports message history from a Facebook data export, indexes that history for semantic retrieval with Meilisearch, and uses OpenAI models to generate replies that resemble your tone and phrasing.
+The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports message history from a Facebook data export, stores semantic embeddings in PostgreSQL with `pgvector`, and uses OpenAI models to generate replies that resemble your tone and phrasing.
 
 ## What It Does
 
 - Connects a WhatsApp session and exposes webhook-based message handling
 - Imports historical conversation data from a Facebook export
-- Generates embeddings and stores searchable message chunks in Meilisearch
+- Generates embeddings and stores searchable message chunks in PostgreSQL with `pgvector`
 - Retrieves relevant past messages to build context for replies
 - Supports auto-reply toggles for specific WhatsApp contacts
 - Supports OpenAI API key auth and OAuth-based credential flows
@@ -34,11 +34,12 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 - Laravel Breeze for auth scaffolding
 - WAHA for WhatsApp session management
 - OpenAI for embeddings and chat completions
-- Meilisearch for semantic retrieval / RAG context lookup
+- PostgreSQL with `pgvector` for hybrid semantic retrieval / RAG context lookup
 
 ## Project Structure
 
-- `app/Services` contains the main integration and orchestration logic
+- `app/Services` contains the main orchestration logic
+- `app/Integrations` contains WAHA, OpenAI, and pgvector-specific integration helpers
 - `app/Console/Commands` contains import and embedding generation commands
 - `app/Http/Controllers` contains WhatsApp, OpenAI, import, and auto-reply flows
 - `routes/web.php` defines the authenticated UI and webhook endpoints
@@ -62,6 +63,8 @@ composer run dev
 
 The setup script installs PHP and JS dependencies, creates `.env` if needed, generates an app key, runs migrations, and builds frontend assets.
 
+If you are upgrading an existing checkout from the old Meilisearch-based setup, recreate the `pgsql` container after pulling the new `compose.yaml` so PostgreSQL includes the `pgvector` extension.
+
 ## Environment
 
 At minimum, review these values in `.env`:
@@ -78,9 +81,6 @@ OPENAI_DEFAULT_MODEL=gpt-4o
 # Optional fallback for embeddings / CLI tasks when no OpenAI credential is connected in the app
 OPENAI_API_KEY=
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
-
-MEILISEARCH_HOST=http://meilisearch:7700
-MEILISEARCH_KEY=
 ```
 
 ## Common Commands
@@ -104,7 +104,7 @@ php artisan embeddings:generate --fresh
 
 ## Development Notes
 
-- Keep controllers thin and move external API logic into `app/Services`
+- Keep controllers thin and move orchestration into `app/Services` and third-party access into `app/Integrations`
 - Format PHP changes with `./vendor/bin/pint`
 - Put request and route behavior in `tests/Feature`
 - Put isolated service behavior in `tests/Unit`

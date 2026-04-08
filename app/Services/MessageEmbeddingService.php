@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Integrations\Meilisearch\MeilisearchService;
 use App\Integrations\OpenAI\OpenAIService;
+use App\Integrations\Pgvector\PgvectorService;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -15,7 +15,7 @@ class MessageEmbeddingService
     protected int $indexed = 0;
 
     public function __construct(
-        protected MeilisearchService $meilisearch,
+        protected PgvectorService $pgvector,
     ) {}
 
     public function generate(bool $fresh = false, int $batchSize = 100, ?User $user = null): array
@@ -23,7 +23,7 @@ class MessageEmbeddingService
         $this->indexed = 0;
         $this->openai = OpenAIService::forEmbeddings($user);
 
-        $this->setupIndex($fresh);
+        $this->setupStorage($fresh);
 
         $totalMessages = Message::join('conversations', 'messages.conversation_id', '=', 'conversations.id')
             ->where('conversations.is_group_chat', false)
@@ -65,38 +65,10 @@ class MessageEmbeddingService
         ];
     }
 
-    protected function setupIndex(bool $fresh): void
+    protected function setupStorage(bool $fresh): void
     {
-        $this->meilisearch->enableVectorStore();
-
         if ($fresh) {
-            $task = $this->meilisearch->deleteIndex('messages');
-
-            if (isset($task['taskUid'])) {
-                $this->meilisearch->waitForTask($task['taskUid']);
-            }
-        }
-
-        $task = $this->meilisearch->createIndex('messages', 'id');
-
-        if (isset($task['taskUid'])) {
-            $this->meilisearch->waitForTask($task['taskUid']);
-        }
-
-        $task = $this->meilisearch->updateSettings('messages', [
-            'searchableAttributes' => ['content'],
-            'filterableAttributes' => ['conversation_id', 'is_group_chat'],
-            'sortableAttributes' => ['sent_at_ts'],
-            'embedders' => [
-                'openai' => [
-                    'source' => 'userProvided',
-                    'dimensions' => 1536,
-                ],
-            ],
-        ]);
-
-        if (isset($task['taskUid'])) {
-            $this->meilisearch->waitForTask($task['taskUid'], 120);
+            $this->pgvector->clearMessageEmbeddings();
         }
     }
 
@@ -123,19 +95,13 @@ class MessageEmbeddingService
 
         foreach ($messages as $index => $message) {
             $documents[] = [
-                'id' => $message->id,
+                'message_id' => $message->id,
                 'content' => $chunks[$index],
-                'conversation_id' => $message->conversation_id,
-                'sender_name' => $message->sender_name,
-                'is_group_chat' => false,
-                'sent_at_ts' => $message->timestamp_ms,
-                '_vectors' => [
-                    'openai' => $embeddings[$index],
-                ],
+                'embedding' => $embeddings[$index],
             ];
         }
 
-        $this->meilisearch->addDocuments('messages', $documents);
+        $this->pgvector->upsertMessageEmbeddings($documents);
         $this->indexed += count($documents);
     }
 }

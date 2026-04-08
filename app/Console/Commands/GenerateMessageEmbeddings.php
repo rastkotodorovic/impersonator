@@ -8,10 +8,10 @@ use Illuminate\Console\Command;
 class GenerateMessageEmbeddings extends Command
 {
     protected $signature = 'embeddings:generate
-                            {--fresh : Drop and recreate the Meilisearch index}
+                            {--fresh : Regenerate stored message embeddings from scratch}
                             {--batch-size=100 : Messages per OpenAI embedding request}';
 
-    protected $description = 'Generate vector embeddings for imported messages and index into Meilisearch';
+    protected $description = 'Generate vector embeddings for imported messages and store them in Postgres via pgvector';
 
     public function handle(MessageEmbeddingService $embeddingService): int
     {

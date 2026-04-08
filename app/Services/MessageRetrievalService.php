@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Integrations\Meilisearch\MeilisearchService;
 use App\Integrations\OpenAI\OpenAIService;
+use App\Integrations\Pgvector\PgvectorService;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -13,7 +13,7 @@ class MessageRetrievalService
     protected int $maxContextChars = 12000; // ~3000 tokens
 
     public function __construct(
-        protected MeilisearchService $meilisearch,
+        protected PgvectorService $pgvector,
     ) {}
 
     public function retrieveContext(string $incomingMessage, ?User $user = null, int $matchLimit = 15): array
@@ -44,20 +44,8 @@ class MessageRetrievalService
     {
         $openai = OpenAIService::forEmbeddings($user);
         $embeddings = $openai->embeddings([$query]);
-        $vector = $embeddings[0];
-
-        $results = $this->meilisearch->search('messages', [
-            'q' => $query,
-            'vector' => $vector,
-            'showRankingScore' => true,
-            'hybrid' => [
-                'semanticRatio' => 0.7,
-                'embedder' => 'openai',
-            ],
-            'limit' => $limit,
-        ]);
-
-        $messageIds = array_column($results['hits'] ?? [], 'id');
+        $hits = $this->pgvector->hybridSearchMessages($embeddings[0], $query, $limit);
+        $messageIds = array_column($hits, 'id');
 
         if (empty($messageIds)) {
             return [
@@ -73,7 +61,7 @@ class MessageRetrievalService
                 ->get()
                 ->sortBy(fn (Message $message) => array_search($message->id, $messageIds, true))
                 ->values(),
-            'raw_hits' => $results['hits'] ?? [],
+            'raw_hits' => $hits,
         ];
     }
 
@@ -120,7 +108,9 @@ class MessageRetrievalService
                         'sender_name' => $match->sender_name,
                         'content' => $match->content,
                         'sent_at' => $match->sent_at,
-                        'ranking_score' => $rawHit['_rankingScore'] ?? null,
+                        'ranking_score' => $rawHit['ranking_score'] ?? null,
+                        'vector_score' => $rawHit['vector_score'] ?? null,
+                        'text_score' => $rawHit['text_score'] ?? null,
                     ],
                     'messages' => $windowMessages,
                 ];
@@ -148,7 +138,9 @@ class MessageRetrievalService
                 'sender_name' => $match->sender_name,
                 'content' => $match->content,
                 'sent_at' => $match->sent_at,
-                'ranking_score' => $rawHit['_rankingScore'] ?? null,
+                'ranking_score' => $rawHit['ranking_score'] ?? null,
+                'vector_score' => $rawHit['vector_score'] ?? null,
+                'text_score' => $rawHit['text_score'] ?? null,
             ];
         })->all();
     }

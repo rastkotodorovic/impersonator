@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Integrations\Meilisearch\MeilisearchService;
+use App\Integrations\Pgvector\PgvectorService;
 use App\Integrations\Waha\WahaService;
 use App\Services\Channels\WhatsappChannel;
 use App\Socialite\OpenAIProvider;
@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(WahaService::class);
-        $this->app->singleton(MeilisearchService::class);
+        $this->app->singleton(PgvectorService::class);
         $this->app->singleton(WhatsappChannel::class);
     }
 
