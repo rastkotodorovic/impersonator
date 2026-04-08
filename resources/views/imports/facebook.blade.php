@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-gray-800">
-            {{ __('Import Facebook Messages') }}
+            {{ __('Import Message History') }}
         </h2>
     </x-slot>
 
@@ -42,27 +42,27 @@
                 <div class="overflow-hidden rounded-lg bg-white p-5 text-gray-900 shadow-sm ring-1 ring-gray-200">
                     <p class="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Last Skipped</p>
                     <p class="mt-3 text-3xl font-semibold">{{ number_format($latestRun?->messages_skipped ?? 0) }}</p>
-                    <p class="mt-1 text-sm text-gray-500">Non-text entries ignored in the latest run.</p>
+                    <p class="mt-1 text-sm text-gray-500">Non-text or placeholder entries ignored in the latest run.</p>
                 </div>
             </div>
 
             <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <h3 class="text-lg font-medium text-gray-900">Upload Facebook Export</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Upload Facebook or Instagram Export</h3>
                         <p class="mt-2 text-sm text-gray-500">
-                            Upload the Facebook messages ZIP export or point the app at an already extracted local messages folder. The app will import the JSON message history into PostgreSQL and rebuild embeddings immediately.
+                            Upload a Facebook Messenger or Instagram messages ZIP export or point the app at an already extracted local messages folder. The app imports the JSON message history into PostgreSQL and rebuilds embeddings immediately.
                         </p>
 
                         <form method="POST" action="{{ route('imports.facebook.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                             @csrf
 
                             <div>
-                                <label for="archive" class="block text-sm font-medium text-gray-700">Facebook messages ZIP</label>
+                                <label for="archive" class="block text-sm font-medium text-gray-700">Messages ZIP archive</label>
                                 <input type="file" name="archive" id="archive" accept=".zip"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                        >
-                                <p class="mt-2 text-xs text-gray-500">Good for smaller exports. For very large archives, use the local folder path field below instead.</p>
+                                <p class="mt-2 text-xs text-gray-500">Works with Facebook Messenger and Instagram exports. For very large archives, use the local folder path field below instead.</p>
                                 @error('archive')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -73,8 +73,8 @@
                                 <input type="text" name="source_path" id="source_path"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                        value="{{ old('source_path') }}"
-                                       placeholder="data/your_facebook_activity/messages">
-                                <p class="mt-2 text-xs text-gray-500">Best for very large exports. Extract the Facebook ZIP locally first, then point this field to `your_facebook_activity/messages` or the ZIP file path on this machine.</p>
+                                       placeholder="data/your_facebook_activity/messages or data/your_instagram_activity/messages">
+                                <p class="mt-2 text-xs text-gray-500">Best for very large exports. Extract the ZIP locally first, then point this field to `your_facebook_activity/messages`, `your_instagram_activity/messages`, or the ZIP file path on this machine.</p>
                                 @error('source_path')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -85,8 +85,8 @@
                                 <input type="text" name="me_name" id="me_name"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                        value="{{ old('me_name', 'Rastko Todorovic') }}"
-                                       placeholder="Your full Facebook name" required>
-                                <p class="mt-2 text-xs text-gray-500">Used to mark which imported messages are yours.</p>
+                                       placeholder="Your full name as shown in the export" required>
+                                <p class="mt-2 text-xs text-gray-500">Used to mark which imported messages are yours across Facebook Messenger or Instagram exports.</p>
                                 @error('me_name')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -123,7 +123,7 @@
                             <h3 class="text-lg font-medium text-gray-900">Latest Import</h3>
 
                             @if(! $latestRun)
-                                <p class="mt-4 text-sm text-gray-500">No Facebook imports have been run yet.</p>
+                                <p class="mt-4 text-sm text-gray-500">No message imports have been run yet.</p>
                             @else
                                 <div class="mt-4 rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200">
                                     <div class="flex items-start justify-between gap-4">
@@ -185,20 +185,37 @@
 
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-medium text-gray-900">How To Export From Facebook</h3>
-                    <ol class="mt-4 list-decimal space-y-2 pl-5 text-sm text-gray-600">
-                        <li>Open Facebook and go to <span class="font-medium text-gray-900">Profile</span> then <span class="font-medium text-gray-900">Settings &amp; privacy</span>.</li>
-                        <li>Open <span class="font-medium text-gray-900">Accounts Center</span>, then go to <span class="font-medium text-gray-900">Your information and permissions</span> and choose <span class="font-medium text-gray-900">Download your information</span>.</li>
-                        <li>Start a new export and deselect everything except <span class="font-medium text-gray-900">Messages</span>.</li>
-                        <li>For format, choose <span class="font-medium text-gray-900">JSON</span>, not HTML.</li>
-                        <li>Create the export and download the ZIP archive from Facebook when it is ready.</li>
-                        <li>Upload that ZIP on this page.</li>
-                    </ol>
+                    <h3 class="text-lg font-medium text-gray-900">How To Export</h3>
+
+                    <div class="mt-4 grid gap-6 lg:grid-cols-2">
+                        <div class="rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-900">Facebook Messenger</h4>
+                            <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600">
+                                <li>Open Facebook and go to <span class="font-medium text-gray-900">Profile</span> then <span class="font-medium text-gray-900">Settings &amp; privacy</span>.</li>
+                                <li>Open <span class="font-medium text-gray-900">Accounts Center</span>, then go to <span class="font-medium text-gray-900">Your information and permissions</span> and choose <span class="font-medium text-gray-900">Download your information</span>.</li>
+                                <li>Start a new export and deselect everything except <span class="font-medium text-gray-900">Messages</span>.</li>
+                                <li>Choose <span class="font-medium text-gray-900">JSON</span>, not HTML.</li>
+                                <li>Create the export, download the ZIP, and upload it here or point to `your_facebook_activity/messages`.</li>
+                            </ol>
+                        </div>
+
+                        <div class="rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-900">Instagram</h4>
+                            <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600">
+                                <li>Open Instagram and go to <span class="font-medium text-gray-900">Settings and activity</span>.</li>
+                                <li>Open <span class="font-medium text-gray-900">Accounts Center</span>, then <span class="font-medium text-gray-900">Your information and permissions</span> and choose <span class="font-medium text-gray-900">Download your information</span>.</li>
+                                <li>Create an export that includes <span class="font-medium text-gray-900">Messages</span>.</li>
+                                <li>Choose <span class="font-medium text-gray-900">JSON</span>, not HTML.</li>
+                                <li>Download the ZIP, then upload it here or point to `your_instagram_activity/messages`.</li>
+                            </ol>
+                        </div>
+                    </div>
 
                     <div class="mt-6 rounded-md bg-gray-50 p-4 text-sm text-gray-600">
                         <p class="font-medium text-gray-900">What gets imported</p>
-                        <p class="mt-1">The importer reads only Messenger message data from `inbox`, `e2ee_cutover`, and `message_requests`. Other Facebook account data in the archive is ignored.</p>
-                        <p class="mt-2">If the full Facebook export is too large to upload through the browser, extract it locally and use the local folder path field instead.</p>
+                        <p class="mt-1">The importer reads only message data from `inbox`, `e2ee_cutover`, and `message_requests`. Other account data in the archive is ignored.</p>
+                        <p class="mt-2">Instagram attachment placeholders like “sent an attachment” are skipped so they do not pollute retrieval context.</p>
+                        <p class="mt-2">If the full export is too large to upload through the browser, extract it locally and use the local folder path field instead.</p>
                     </div>
                 </div>
             </div>

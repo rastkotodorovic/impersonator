@@ -1,11 +1,12 @@
-# Facebook Data Export
+# Message Data Export
 
-Documentation of the Facebook message export structure, import pipeline, and resulting database contents.
+Documentation of the Facebook Messenger and Instagram message export structure, import pipeline, and resulting database contents.
 
 ## Export Location
 
 ```
 data/your_facebook_activity/messages/
+data/your_instagram_activity/messages/
 ```
 
 ## Relevant Source Directories
@@ -14,7 +15,7 @@ data/your_facebook_activity/messages/
 
 Standard Messenger conversations. Each thread is a directory containing one or more `message_N.json` files.
 
-### `e2ee_cutover/` — E2E encrypted conversations (34 threads)
+### `e2ee_cutover/` — E2E encrypted conversations (Facebook only)
 
 Conversations that migrated to end-to-end encryption. Same JSON format as inbox.
 
@@ -24,7 +25,7 @@ Messages from people outside the friends list. Same format, low volume.
 
 ## Message JSON Structure
 
-Every `message_N.json` file follows this format:
+Facebook Messenger and Instagram exports both provide `message_N.json` files with the same core structure:
 
 ```json
 {
@@ -55,17 +56,18 @@ Every `message_N.json` file follows this format:
 | `messages[].timestamp_ms` | Unix timestamp in milliseconds — messages are ordered newest-first in the JSON |
 | `messages[].content` | The message text (not always present — calls, photos, etc. omit this) |
 
-### Messages without `content`
+### Messages skipped during import
 
-Some message entries represent non-text events and are skipped during import:
+Some message entries represent non-text or low-value events and are skipped during import:
 - **Calls** — have `call_duration` field (sometimes alongside a system-generated `content`)
 - **Photos/videos** — have `photos` or `videos` array
 - **Stickers** — have `sticker` object
 - **Shares** — have `share` object (links)
+- **Instagram attachment placeholders** — entries like `Bojan sent an attachment.` paired with attachment metadata
 
 ## Text Encoding
 
-Facebook exports text as **UTF-8 double-encoded**. After `json_decode()`, the string contains UTF-8 byte sequences interpreted as individual Unicode codepoints. The fix is to convert from UTF-8 back down to ISO-8859-1 (single-byte), which recovers the original UTF-8 bytes:
+Facebook Messenger and Instagram exports use the same **UTF-8 double-encoded** text quirk. After `json_decode()`, the string contains UTF-8 byte sequences interpreted as individual Unicode codepoints. The fix is to convert from UTF-8 back down to ISO-8859-1 (single-byte), which recovers the original UTF-8 bytes:
 
 ```php
 mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8');
@@ -78,14 +80,16 @@ This applies to `sender_name`, `content`, participant names, and conversation ti
 ```bash
 php artisan import:facebook-messages
 php artisan import:facebook-messages --path=data/your_facebook_activity/messages --me="Rastko Todorovic"
+php artisan import:facebook-messages --path=data/your_instagram_activity/messages --me="Rastko Todorovic"
 ```
 
-The command scans all three source directories, decodes text, skips non-text messages, and batch-upserts into the database. It is idempotent — re-running produces the same data without duplicates. The unique constraint is `(conversation_id, timestamp_ms, sender_name)`.
+The command scans available source directories, decodes text, skips non-text messages and Instagram attachment placeholders, and batch-upserts into the database. It is idempotent — re-running produces the same data without duplicates. The unique constraint is `(conversation_id, timestamp_ms, sender_name)`.
 
 ## UI Upload Flow
 
 The app also provides an authenticated upload page at `/imports/facebook`.
 
+Facebook Messenger:
 1. Open Facebook and go to `Profile` then `Settings & privacy`
 2. Open `Accounts Center`
 3. Go to `Your information and permissions`
@@ -96,7 +100,18 @@ The app also provides an authenticated upload page at `/imports/facebook`.
 8. For smaller exports, upload that ZIP in the app
 9. For very large exports, extract the archive locally and import from the `your_facebook_activity/messages` folder path in the UI instead of browser upload
 
-The import page supports both browser ZIP uploads and direct local-path imports. For very large Facebook exports, local-path import is more reliable because it avoids sending multi-GB files through the browser request.
+Instagram:
+1. Open Instagram and go to `Settings and activity`
+2. Open `Accounts Center`
+3. Go to `Your information and permissions`
+4. Choose `Download your information`
+5. Create an export that includes `Messages`
+6. Set format to `JSON`, not HTML
+7. Download the ZIP archive
+8. For smaller exports, upload that ZIP in the app
+9. For very large exports, extract the archive locally and import from the `your_instagram_activity/messages` folder path in the UI instead of browser upload
+
+The import page supports both browser ZIP uploads and direct local-path imports. For very large exports, local-path import is more reliable because it avoids sending multi-GB files through the browser request.
 
 ## Database Schema
 

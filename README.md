@@ -6,12 +6,12 @@
 
 Impersonator is a Laravel application that experiments with AI-assisted WhatsApp auto-replies using your own historical message data.
 
-The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports message history from a Facebook data export, stores semantic embeddings in PostgreSQL with `pgvector`, and uses OpenAI models to generate replies that resemble your tone and phrasing.
+The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports message history from Facebook Messenger or Instagram data exports, stores semantic embeddings in PostgreSQL with `pgvector`, and uses OpenAI models to generate replies that resemble your tone and phrasing.
 
 ## What It Does
 
 - Connects a WhatsApp session and exposes webhook-based message handling
-- Imports historical conversation data from a Facebook export
+- Imports historical conversation data from Facebook Messenger or Instagram exports
 - Generates embeddings and stores searchable message chunks in PostgreSQL with `pgvector`
 - Retrieves relevant past messages to build context for replies
 - Supports auto-reply toggles for specific WhatsApp contacts
@@ -20,7 +20,7 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 ## How It Works
 
 1. Connect your WhatsApp account through WAHA.
-2. Import your Facebook-exported messages into the app database.
+2. Import your Facebook Messenger or Instagram messages into the app database.
 3. Generate embeddings so past messages can be searched semantically.
 4. When a new message arrives, the app retrieves related conversation snippets and recent chat history.
 5. OpenAI generates a reply based on that context.
@@ -99,7 +99,7 @@ php artisan embeddings:generate --fresh
 - `/whatsapp` manages WAHA connection, QR code retrieval, status, and disconnect flow
 - `/whatsapp/auto-reply` manages which contacts can receive automated replies
 - `/openai` manages OpenAI credentials and connection settings
-- `/imports/facebook` uploads a Facebook messages export and rebuilds embeddings automatically
+- `/imports/facebook` uploads a Facebook Messenger or Instagram messages export and rebuilds embeddings automatically
 - `/webhooks/whatsapp` receives incoming WhatsApp events
 
 ## Development Notes
@@ -109,7 +109,7 @@ php artisan embeddings:generate --fresh
 - Put request and route behavior in `tests/Feature`
 - Put isolated service behavior in `tests/Unit`
 - When changing auto-reply behavior, verify queue processing and webhook handling together
-- Facebook imports run synchronously from the upload request and rebuild embeddings immediately after import
+- Message imports run synchronously from the upload request and rebuild embeddings immediately after import
 
 ## License
 

@@ -27,8 +27,8 @@ class StoreFacebookImportRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'archive.required_without' => 'Upload a Facebook ZIP archive or provide a local extracted folder path.',
-            'source_path.required_without' => 'Upload a Facebook ZIP archive or provide a local extracted folder path.',
+            'archive.required_without' => 'Upload a Facebook or Instagram ZIP archive or provide a local extracted folder path.',
+            'source_path.required_without' => 'Upload a Facebook or Instagram ZIP archive or provide a local extracted folder path.',
         ];
     }
 
@@ -38,7 +38,7 @@ class StoreFacebookImportRequest extends FormRequest
             $fallbackValidator = Validator::make([], []);
             $fallbackValidator->errors()->add(
                 'archive',
-                'The ZIP upload did not reach Laravel. This usually happens with very large Facebook exports. Use the local extracted folder path field instead of browser upload for huge archives.'
+                'The ZIP upload did not reach Laravel. This usually happens with very large Facebook or Instagram exports. Use the local extracted folder path field instead of browser upload for huge archives.'
             );
 
             throw (new ValidationException($fallbackValidator))

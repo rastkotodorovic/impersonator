@@ -29,9 +29,10 @@ class FacebookImportControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('imports.facebook.index'));
 
         $response->assertOk();
-        $response->assertSee('Import Facebook Messages');
+        $response->assertSee('Import Message History');
         $response->assertSee('Download your information');
         $response->assertSee('Messages');
+        $response->assertSee('Instagram');
     }
 
     public function test_store_validates_archive_is_required(): void
@@ -53,8 +54,64 @@ class FacebookImportControllerTest extends TestCase
             ->withServerVariables(['CONTENT_LENGTH' => '1007889697'])
             ->post(route('imports.facebook.store'), [])
             ->assertSessionHasErrors([
-                'archive' => 'The ZIP upload did not reach Laravel. This usually happens with very large Facebook exports. Use the local extracted folder path field instead of browser upload for huge archives.',
+                'archive' => 'The ZIP upload did not reach Laravel. This usually happens with very large Facebook or Instagram exports. Use the local extracted folder path field instead of browser upload for huge archives.',
             ]);
+    }
+
+    public function test_store_accepts_instagram_local_source_path_and_runs_import(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $relativeSourcePath = 'storage/framework/testing/instagram-source-'.uniqid().'/your_instagram_activity/messages';
+        $sourcePath = base_path($relativeSourcePath);
+        $threadPath = $sourcePath.'/inbox/example_thread';
+
+        File::ensureDirectoryExists($threadPath);
+
+        try {
+            file_put_contents($threadPath.'/message_1.json', '{}');
+
+            $this->mock(FacebookMessageImportService::class, function ($mock) use ($sourcePath) {
+                $mock->shouldReceive('importFromPath')
+                    ->once()
+                    ->with($sourcePath, 'Rastko Todorovic')
+                    ->andReturn([
+                        'threads_found' => 1,
+                        'conversations' => 1,
+                        'messages_imported' => 8,
+                        'messages_skipped' => 2,
+                    ]);
+            });
+
+            $this->mock(MessageEmbeddingService::class, function ($mock) {
+                $mock->shouldReceive('generate')
+                    ->once()
+                    ->with(true)
+                    ->andReturn([
+                        'messages_indexed' => 8,
+                        'total_messages' => 8,
+                        'batch_size' => 100,
+                    ]);
+            });
+
+            $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+                'source_path' => $relativeSourcePath,
+                'me_name' => 'Rastko Todorovic',
+            ]);
+
+            $response->assertRedirect();
+            $response->assertSessionHas('success', 'Import completed: 8 messages absorbed, 2 skipped, 1 conversations updated. Embeddings were rebuilt.');
+
+            $run = FacebookImportRun::query()->latest()->first();
+
+            $this->assertNotNull($run);
+            $this->assertSame('completed', $run->status);
+            $this->assertSame('messages', $run->uploaded_filename);
+            $this->assertSame('local://'.$sourcePath, $run->storage_path);
+        } finally {
+            File::deleteDirectory(base_path(dirname(dirname($relativeSourcePath))));
+        }
     }
 
     public function test_store_runs_import_synchronously_and_persists_run(): void
@@ -136,7 +193,8 @@ class FacebookImportControllerTest extends TestCase
         Storage::fake('local');
 
         $user = User::factory()->create();
-        $sourcePath = base_path('data/your_facebook_activity/messages');
+        $relativeSourcePath = 'storage/framework/testing/facebook-source-'.uniqid().'/your_facebook_activity/messages';
+        $sourcePath = base_path($relativeSourcePath);
         $threadPath = $sourcePath.'/inbox/example_thread';
 
         File::ensureDirectoryExists($threadPath);
@@ -168,7 +226,7 @@ class FacebookImportControllerTest extends TestCase
             });
 
             $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
-                'source_path' => 'data/your_facebook_activity/messages',
+                'source_path' => $relativeSourcePath,
                 'me_name' => 'Rastko Todorovic',
             ]);
 
@@ -182,7 +240,7 @@ class FacebookImportControllerTest extends TestCase
             $this->assertSame('messages', $run->uploaded_filename);
             $this->assertSame('local://'.$sourcePath, $run->storage_path);
         } finally {
-            File::deleteDirectory(base_path('data/your_facebook_activity'));
+            File::deleteDirectory(base_path(dirname(dirname($relativeSourcePath))));
         }
     }
 

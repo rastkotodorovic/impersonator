@@ -87,7 +87,7 @@ class ProcessFacebookImport implements ShouldQueue
                 return $this->extractArchive($sourcePath, $tempDir);
             }
 
-            throw new \RuntimeException('The local Facebook import path does not exist or is not a ZIP / extracted messages directory.');
+            throw new \RuntimeException('The local import path does not exist or is not a ZIP / extracted Facebook or Instagram messages directory.');
         }
 
         $archivePath = Storage::disk('local')->path($storagePath);
@@ -98,7 +98,7 @@ class ProcessFacebookImport implements ShouldQueue
     protected function extractArchive(string $archivePath, string $destination): string
     {
         if (! class_exists(\ZipArchive::class)) {
-            throw new \RuntimeException('PHP ZipArchive extension is required for Facebook imports.');
+            throw new \RuntimeException('PHP ZipArchive extension is required for Facebook or Instagram imports.');
         }
 
         File::ensureDirectoryExists($destination);
@@ -107,7 +107,7 @@ class ProcessFacebookImport implements ShouldQueue
         $result = $zip->open($archivePath);
 
         if ($result !== true) {
-            throw new \RuntimeException('Unable to open uploaded Facebook export archive.');
+            throw new \RuntimeException('Unable to open uploaded Facebook or Instagram export archive.');
         }
 
         $zip->extractTo($destination);
@@ -120,6 +120,7 @@ class ProcessFacebookImport implements ShouldQueue
     {
         $candidates = [
             $destination.'/your_facebook_activity/messages',
+            $destination.'/your_instagram_activity/messages',
             $destination.'/messages',
         ];
 
@@ -146,7 +147,7 @@ class ProcessFacebookImport implements ShouldQueue
             }
         }
 
-        throw new \RuntimeException('The uploaded archive does not contain a valid Facebook messages export.');
+        throw new \RuntimeException('The uploaded archive does not contain a valid Facebook or Instagram messages export.');
     }
 
     protected function isValidMessagesDirectory(string $path): bool

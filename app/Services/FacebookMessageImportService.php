@@ -10,6 +10,8 @@ class FacebookMessageImportService
 {
     protected const SOURCE_DIRECTORIES = ['inbox', 'e2ee_cutover', 'message_requests'];
 
+    protected const ATTACHMENT_KEYS = ['photos', 'videos', 'audio_files', 'gifs', 'files', 'sticker', 'share'];
+
     public function importFromPath(string $basePath, string $meName): array
     {
         if (! is_dir($basePath)) {
@@ -108,18 +110,19 @@ class FacebookMessageImportService
                 $messages = array_reverse($data['messages']);
 
                 foreach ($messages as $message) {
-                    if (! isset($message['content']) || isset($message['call_duration'])) {
+                    if ($this->shouldSkipMessage($message)) {
                         $skipped++;
 
                         continue;
                     }
 
                     $senderName = $this->decodeText($message['sender_name']);
+                    $content = $this->decodeText($message['content']);
                     $batch[] = [
                         'conversation_id' => $conversation->id,
                         'sender_name' => $senderName,
                         'is_from_me' => $senderName === $meName,
-                        'content' => $this->decodeText($message['content']),
+                        'content' => $content,
                         'timestamp_ms' => $message['timestamp_ms'],
                         'sent_at' => Carbon::createFromTimestampMs($message['timestamp_ms']),
                         'created_at' => now(),
@@ -153,6 +156,38 @@ class FacebookMessageImportService
         );
 
         return count($batch);
+    }
+
+    protected function shouldSkipMessage(array $message): bool
+    {
+        if (! isset($message['content']) || isset($message['call_duration'])) {
+            return true;
+        }
+
+        $content = trim($this->decodeText((string) $message['content']));
+
+        if ($content === '') {
+            return true;
+        }
+
+        return $this->hasAttachmentPayload($message)
+            && $this->isAttachmentPlaceholder($content);
+    }
+
+    protected function hasAttachmentPayload(array $message): bool
+    {
+        foreach (self::ATTACHMENT_KEYS as $key) {
+            if (isset($message[$key])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function isAttachmentPlaceholder(string $content): bool
+    {
+        return preg_match('/^.+ sent an attachment\.$/i', $content) === 1;
     }
 
     protected function decodeText(string $text): string

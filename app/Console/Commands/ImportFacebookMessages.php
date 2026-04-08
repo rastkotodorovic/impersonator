@@ -8,10 +8,10 @@ use Illuminate\Console\Command;
 class ImportFacebookMessages extends Command
 {
     protected $signature = 'import:facebook-messages
-                            {--path=data/your_facebook_activity/messages : Path to Facebook messages directory}
+                            {--path=data/your_facebook_activity/messages : Path to Facebook or Instagram messages directory}
                             {--me=Rastko Todorovic : Your name as it appears in the export}';
 
-    protected $description = 'Import Facebook Messenger exports into the database';
+    protected $description = 'Import Facebook Messenger or Instagram message exports into the database';
 
     public function handle(FacebookMessageImportService $importer): int
     {

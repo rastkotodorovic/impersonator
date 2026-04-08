@@ -32,7 +32,7 @@ class FacebookImportController extends Controller
             ->exists();
 
         if ($isImportRunning) {
-            return back()->with('error', 'A Facebook import is already running. Wait for it to finish before uploading another export.');
+            return back()->with('error', 'A message import is already running. Wait for it to finish before uploading another export.');
         }
 
         $archive = $request->file('archive');
@@ -58,7 +58,7 @@ class FacebookImportController extends Controller
         try {
             ProcessFacebookImport::dispatchSync($importRun->id);
         } catch (\Throwable) {
-            return back()->with('error', 'Facebook import failed. Check the latest import details below.');
+            return back()->with('error', 'The message import failed. Check the latest import details below.');
         }
 
         $importRun->refresh();
