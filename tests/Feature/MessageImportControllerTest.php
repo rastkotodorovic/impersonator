@@ -2,24 +2,23 @@
 
 namespace Tests\Feature;
 
-use App\Models\FacebookImportRun;
+use App\Models\MessageImportRun;
 use App\Models\User;
-use App\Services\FacebookMessageImportService;
 use App\Services\MessageEmbeddingService;
-use App\Services\WhatsappChatImportService;
+use App\Services\MessageImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-class FacebookImportControllerTest extends TestCase
+class MessageImportControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     public function test_import_page_requires_authentication(): void
     {
-        $this->get(route('imports.facebook.index'))
+        $this->get(route('imports.index'))
             ->assertRedirect(route('login'));
     }
 
@@ -27,7 +26,7 @@ class FacebookImportControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('imports.facebook.index'));
+        $response = $this->actingAs($user)->get(route('imports.index'));
 
         $response->assertOk();
         $response->assertSee('Import Message History');
@@ -41,7 +40,7 @@ class FacebookImportControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->post(route('imports.facebook.store'), [
+            ->post(route('imports.store'), [
                 'me_name' => 'Rastko Todorovic',
             ])
             ->assertSessionHasErrors(['archive', 'source_path']);
@@ -53,7 +52,7 @@ class FacebookImportControllerTest extends TestCase
 
         $this->actingAs($user)
             ->withServerVariables(['CONTENT_LENGTH' => '1007889697'])
-            ->post(route('imports.facebook.store'), [])
+            ->post(route('imports.store'), [])
             ->assertSessionHasErrors([
                 'archive' => 'The upload did not reach Laravel. This usually happens with very large export files. Use the local export path field instead of browser upload for huge archives.',
             ]);
@@ -73,7 +72,7 @@ class FacebookImportControllerTest extends TestCase
         try {
             file_put_contents($threadPath.'/message_1.json', '{}');
 
-            $this->mock(FacebookMessageImportService::class, function ($mock) use ($sourcePath) {
+            $this->mock(MessageImportService::class, function ($mock) use ($sourcePath) {
                 $mock->shouldReceive('importFromPath')
                     ->once()
                     ->with($sourcePath, 'Rastko Todorovic')
@@ -96,7 +95,7 @@ class FacebookImportControllerTest extends TestCase
                     ]);
             });
 
-            $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+            $response = $this->actingAs($user)->post(route('imports.store'), [
                 'source_path' => $relativeSourcePath,
                 'me_name' => 'Rastko Todorovic',
             ]);
@@ -104,7 +103,7 @@ class FacebookImportControllerTest extends TestCase
             $response->assertRedirect();
             $response->assertSessionHas('success', 'Import completed: 8 messages absorbed, 2 skipped, 1 conversations updated. Embeddings were rebuilt.');
 
-            $run = FacebookImportRun::query()->latest()->first();
+            $run = MessageImportRun::query()->latest()->first();
 
             $this->assertNotNull($run);
             $this->assertSame('completed', $run->status);
@@ -120,9 +119,9 @@ class FacebookImportControllerTest extends TestCase
         Storage::fake('local');
 
         $user = User::factory()->create();
-        $archive = $this->makeFacebookArchive();
+        $archive = $this->makeArchive();
 
-        $this->mock(FacebookMessageImportService::class, function ($mock) {
+        $this->mock(MessageImportService::class, function ($mock) {
             $mock->shouldReceive('importFromPath')
                 ->once()
                 ->andReturn([
@@ -144,7 +143,7 @@ class FacebookImportControllerTest extends TestCase
                 ]);
         });
 
-        $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+        $response = $this->actingAs($user)->post(route('imports.store'), [
             'archive' => $archive,
             'me_name' => 'Rastko Todorovic',
             'replace_existing' => '1',
@@ -153,7 +152,7 @@ class FacebookImportControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Import completed: 10 messages absorbed, 3 skipped, 2 conversations updated. Embeddings were rebuilt.');
 
-        $run = FacebookImportRun::query()->latest()->first();
+        $run = MessageImportRun::query()->latest()->first();
 
         $this->assertNotNull($run);
         $this->assertSame('completed', $run->status);
@@ -178,7 +177,7 @@ class FacebookImportControllerTest extends TestCase
         try {
             file_put_contents($sourcePath, '[25. 3. 2026., 10:08:41 PM] Mama: Bijeljina');
 
-            $this->mock(WhatsappChatImportService::class, function ($mock) use ($sourcePath) {
+            $this->mock(MessageImportService::class, function ($mock) use ($sourcePath) {
                 $mock->shouldReceive('importFromPath')
                     ->once()
                     ->with($sourcePath, 'Rastko Todorovic')
@@ -201,7 +200,7 @@ class FacebookImportControllerTest extends TestCase
                     ]);
             });
 
-            $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+            $response = $this->actingAs($user)->post(route('imports.store'), [
                 'source_path' => $relativeSourcePath,
                 'me_name' => 'Rastko Todorovic',
             ]);
@@ -209,7 +208,7 @@ class FacebookImportControllerTest extends TestCase
             $response->assertRedirect();
             $response->assertSessionHas('success', 'Import completed: 8 messages absorbed, 2 skipped, 1 conversations updated. Embeddings were rebuilt.');
 
-            $run = FacebookImportRun::query()->latest()->first();
+            $run = MessageImportRun::query()->latest()->first();
 
             $this->assertNotNull($run);
             $this->assertSame('completed', $run->status);
@@ -227,7 +226,7 @@ class FacebookImportControllerTest extends TestCase
         $user = User::factory()->create();
         $archive = UploadedFile::fake()->createWithContent('_chat.txt', '[25. 3. 2026., 10:08:41 PM] Mama: Bijeljina');
 
-        $this->mock(WhatsappChatImportService::class, function ($mock) {
+        $this->mock(MessageImportService::class, function ($mock) {
             $mock->shouldReceive('importFromPath')
                 ->once()
                 ->withArgs(function (string $path, string $meName) {
@@ -254,7 +253,7 @@ class FacebookImportControllerTest extends TestCase
                 ]);
         });
 
-        $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+        $response = $this->actingAs($user)->post(route('imports.store'), [
             'archive' => $archive,
             'me_name' => 'Rastko Todorovic',
         ]);
@@ -262,7 +261,7 @@ class FacebookImportControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Import completed: 3 messages absorbed, 1 skipped, 1 conversations updated. Embeddings were rebuilt.');
 
-        $run = FacebookImportRun::query()->latest()->first();
+        $run = MessageImportRun::query()->latest()->first();
 
         $this->assertNotNull($run);
         $this->assertSame('completed', $run->status);
@@ -276,14 +275,14 @@ class FacebookImportControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        FacebookImportRun::create([
+        MessageImportRun::create([
             'status' => 'processing',
             'uploaded_filename' => 'existing.zip',
-            'storage_path' => 'facebook-imports/existing.zip',
+            'storage_path' => 'message-imports/existing.zip',
             'me_name' => 'Rastko Todorovic',
         ]);
 
-        $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+        $response = $this->actingAs($user)->post(route('imports.store'), [
             'archive' => UploadedFile::fake()->create('facebook-messages.zip', 128, 'application/zip'),
             'me_name' => 'Rastko Todorovic',
         ]);
@@ -291,7 +290,7 @@ class FacebookImportControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('error');
 
-        $this->assertCount(1, FacebookImportRun::all());
+        $this->assertCount(1, MessageImportRun::all());
     }
 
     public function test_store_accepts_local_source_path_and_runs_import(): void
@@ -308,7 +307,7 @@ class FacebookImportControllerTest extends TestCase
         try {
             file_put_contents($threadPath.'/message_1.json', '{}');
 
-            $this->mock(FacebookMessageImportService::class, function ($mock) use ($sourcePath) {
+            $this->mock(MessageImportService::class, function ($mock) use ($sourcePath) {
                 $mock->shouldReceive('importFromPath')
                     ->once()
                     ->with($sourcePath, 'Rastko Todorovic')
@@ -331,7 +330,7 @@ class FacebookImportControllerTest extends TestCase
                     ]);
             });
 
-            $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+            $response = $this->actingAs($user)->post(route('imports.store'), [
                 'source_path' => $relativeSourcePath,
                 'me_name' => 'Rastko Todorovic',
             ]);
@@ -339,7 +338,7 @@ class FacebookImportControllerTest extends TestCase
             $response->assertRedirect();
             $response->assertSessionHas('success', 'Import completed: 25 messages absorbed, 5 skipped, 4 conversations updated. Embeddings were rebuilt.');
 
-            $run = FacebookImportRun::query()->latest()->first();
+            $run = MessageImportRun::query()->latest()->first();
 
             $this->assertNotNull($run);
             $this->assertSame('completed', $run->status);
@@ -350,7 +349,7 @@ class FacebookImportControllerTest extends TestCase
         }
     }
 
-    protected function makeFacebookArchive(): UploadedFile
+    protected function makeArchive(): UploadedFile
     {
         $path = storage_path('framework/testing/facebook-messages-'.uniqid().'.zip');
         $zip = new \ZipArchive;

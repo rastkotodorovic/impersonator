@@ -2,20 +2,21 @@
 
 namespace App\Console\Commands;
 
-use App\Services\FacebookMessageImportService;
+use App\Services\MessageImportService;
 use Illuminate\Console\Command;
 
-class ImportFacebookMessages extends Command
+class ImportMessages extends Command
 {
-    protected $signature = 'import:facebook-messages
-                            {--path=data/your_facebook_activity/messages : Path to Facebook or Instagram messages directory}
+    protected $signature = 'import:messages
+                            {--path=data/your_facebook_activity/messages : Path to a Facebook, Instagram, or WhatsApp export}
                             {--me=Rastko Todorovic : Your name as it appears in the export}';
 
-    protected $description = 'Import Facebook Messenger or Instagram message exports into the database';
+    protected $description = 'Import Facebook, Instagram, or WhatsApp message exports into the database';
 
-    public function handle(FacebookMessageImportService $importer): int
+    public function handle(MessageImportService $importer): int
     {
-        $basePath = base_path($this->option('path'));
+        $basePath = (string) $this->option('path');
+        $basePath = str_starts_with($basePath, DIRECTORY_SEPARATOR) ? $basePath : base_path($basePath);
         $meName = $this->option('me');
 
         try {

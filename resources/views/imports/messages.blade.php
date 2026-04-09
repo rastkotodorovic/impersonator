@@ -54,7 +54,7 @@
                             Upload a Facebook Messenger or Instagram messages ZIP export, or a WhatsApp single-chat export `.txt` or `.zip`. You can also point the app at an already extracted local export path. The app imports the message history into PostgreSQL and rebuilds embeddings immediately.
                         </p>
 
-                        <form method="POST" action="{{ route('imports.facebook.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
+                        <form method="POST" action="{{ route('imports.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                             @csrf
 
                             <div>

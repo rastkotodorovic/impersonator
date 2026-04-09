@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
-class StoreFacebookImportRequest extends FormRequest
+class StoreMessageImportRequest extends FormRequest
 {
     public function authorize(): bool
     {

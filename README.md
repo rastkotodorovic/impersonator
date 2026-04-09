@@ -44,7 +44,7 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 - `app/Http/Controllers` contains WhatsApp, OpenAI, import, and auto-reply flows
 - `routes/web.php` defines the authenticated UI and webhook endpoints
 - `resources/views` contains the dashboard, WhatsApp, imports, OpenAI settings, and auth views
-- `docs/facebook-data-export.md` documents the expected import data format
+- `docs/message-imports.md` documents the expected import data format
 
 ## Requirements
 
@@ -99,7 +99,7 @@ php artisan embeddings:generate --fresh
 - `/whatsapp` manages WAHA connection, QR code retrieval, status, and disconnect flow
 - `/whatsapp/auto-reply` manages which contacts can receive automated replies
 - `/openai` manages OpenAI credentials and connection settings
-- `/imports/facebook` uploads a Facebook Messenger, Instagram, or WhatsApp messages export and rebuilds embeddings automatically
+- `/imports/messages` uploads a Facebook Messenger, Instagram, or WhatsApp messages export and rebuilds embeddings automatically
 - `/webhooks/whatsapp` receives incoming WhatsApp events
 
 ## Development Notes

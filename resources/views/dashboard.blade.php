@@ -23,7 +23,7 @@
                     <div class="p-6 text-gray-900">
                         <h3 class="text-lg font-medium text-gray-900">Message Import</h3>
                         <p class="mt-2 text-sm text-gray-500">Upload Facebook Messenger, Instagram, or WhatsApp exports, import the history into PostgreSQL, and rebuild embeddings automatically.</p>
-                        <a href="{{ route('imports.facebook.index') }}"
+                        <a href="{{ route('imports.index') }}"
                            class="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
                             Open Imports
                         </a>

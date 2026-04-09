@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class FacebookImportRun extends Model
+class MessageImportRun extends Model
 {
+    protected $table = 'facebook_import_runs';
+
     protected $fillable = [
         'status',
         'uploaded_filename',

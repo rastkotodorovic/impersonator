@@ -21,7 +21,7 @@
                     <x-nav-link :href="route('openai.index')" :active="request()->routeIs('openai.*')">
                         {{ __('OpenAI') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('imports.facebook.index')" :active="request()->routeIs('imports.*')">
+                    <x-nav-link :href="route('imports.index')" :active="request()->routeIs('imports.*')">
                         {{ __('Message Import') }}
                     </x-nav-link>
                 </div>
@@ -85,7 +85,7 @@
             <x-responsive-nav-link :href="route('openai.index')" :active="request()->routeIs('openai.*')">
                 {{ __('OpenAI') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('imports.facebook.index')" :active="request()->routeIs('imports.*')">
+            <x-responsive-nav-link :href="route('imports.index')" :active="request()->routeIs('imports.*')">
                 {{ __('Message Import') }}
             </x-responsive-nav-link>
         </div>

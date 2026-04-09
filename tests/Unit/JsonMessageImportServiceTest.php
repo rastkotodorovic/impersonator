@@ -4,12 +4,12 @@ namespace Tests\Unit;
 
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Services\FacebookMessageImportService;
+use App\Services\JsonMessageImportService;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
-class FacebookMessageImportServiceTest extends TestCase
+class JsonMessageImportServiceTest extends TestCase
 {
     use DatabaseMigrations;
 
@@ -49,7 +49,7 @@ class FacebookMessageImportServiceTest extends TestCase
                 'thread_path' => 'inbox/example_thread',
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-            $result = app(FacebookMessageImportService::class)->importFromPath($basePath, 'Rastko Todorovic');
+            $result = app(JsonMessageImportService::class)->importFromPath($basePath, 'Rastko Todorovic');
 
             $this->assertSame(1, $result['threads_found']);
             $this->assertSame(2, $result['messages_imported']);

@@ -6,7 +6,7 @@ use App\Models\Conversation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class FacebookMessageImportService
+class JsonMessageImportService
 {
     protected const SOURCE_DIRECTORIES = ['inbox', 'e2ee_cutover', 'message_requests'];
 

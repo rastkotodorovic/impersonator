@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreFacebookImportRequest;
-use App\Jobs\ProcessFacebookImport;
+use App\Http\Requests\StoreMessageImportRequest;
+use App\Jobs\ProcessMessageImport;
 use App\Models\Conversation;
-use App\Models\FacebookImportRun;
 use App\Models\Message;
+use App\Models\MessageImportRun;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
-class FacebookImportController extends Controller
+class MessageImportController extends Controller
 {
     public function index(): View
     {
-        return view('imports.facebook', [
-            'latestRun' => FacebookImportRun::query()->latest()->first(),
-            'recentRuns' => FacebookImportRun::query()->latest()->limit(5)->get(),
-            'isImportRunning' => FacebookImportRun::query()
+        return view('imports.messages', [
+            'latestRun' => MessageImportRun::query()->latest()->first(),
+            'recentRuns' => MessageImportRun::query()->latest()->limit(5)->get(),
+            'isImportRunning' => MessageImportRun::query()
                 ->whereIn('status', ['pending', 'processing'])
                 ->exists(),
             'totalMessages' => Message::count(),
@@ -25,9 +25,9 @@ class FacebookImportController extends Controller
         ]);
     }
 
-    public function store(StoreFacebookImportRequest $request): RedirectResponse
+    public function store(StoreMessageImportRequest $request): RedirectResponse
     {
-        $isImportRunning = FacebookImportRun::query()
+        $isImportRunning = MessageImportRun::query()
             ->whereIn('status', ['pending', 'processing'])
             ->exists();
 
@@ -39,7 +39,7 @@ class FacebookImportController extends Controller
         $sourcePath = $request->input('source_path');
 
         if ($archive) {
-            $storedPath = $archive->store('facebook-imports');
+            $storedPath = $archive->store('message-imports');
             $displayName = $archive->getClientOriginalName();
         } else {
             $normalizedPath = $this->normalizeSourcePath($sourcePath);
@@ -47,7 +47,7 @@ class FacebookImportController extends Controller
             $displayName = basename($normalizedPath);
         }
 
-        $importRun = FacebookImportRun::create([
+        $importRun = MessageImportRun::create([
             'status' => 'pending',
             'uploaded_filename' => $displayName,
             'storage_path' => $storedPath,
@@ -56,7 +56,7 @@ class FacebookImportController extends Controller
         ]);
 
         try {
-            ProcessFacebookImport::dispatchSync($importRun->id);
+            ProcessMessageImport::dispatchSync($importRun->id);
         } catch (\Throwable) {
             return back()->with('error', 'The message import failed. Check the latest import details below.');
         }

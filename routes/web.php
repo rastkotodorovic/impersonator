@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AiTraceController;
 use App\Http\Controllers\AutoReplyContactController;
-use App\Http\Controllers\FacebookImportController;
+use App\Http\Controllers\MessageImportController;
 use App\Http\Controllers\OpenAIAuthController;
 use App\Http\Controllers\OpenAISettingsController;
 use App\Http\Controllers\ProfileController;
@@ -43,8 +43,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('imports')->name('imports.')->group(function () {
-        Route::get('/facebook', [FacebookImportController::class, 'index'])->name('facebook.index');
-        Route::post('/facebook', [FacebookImportController::class, 'store'])->name('facebook.store');
+        Route::get('/messages', [MessageImportController::class, 'index'])->name('index');
+        Route::post('/messages', [MessageImportController::class, 'store'])->name('store');
     });
 });
 
