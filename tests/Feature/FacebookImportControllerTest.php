@@ -6,6 +6,7 @@ use App\Models\FacebookImportRun;
 use App\Models\User;
 use App\Services\FacebookMessageImportService;
 use App\Services\MessageEmbeddingService;
+use App\Services\WhatsappChatImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -54,7 +55,7 @@ class FacebookImportControllerTest extends TestCase
             ->withServerVariables(['CONTENT_LENGTH' => '1007889697'])
             ->post(route('imports.facebook.store'), [])
             ->assertSessionHasErrors([
-                'archive' => 'The ZIP upload did not reach Laravel. This usually happens with very large Facebook or Instagram exports. Use the local extracted folder path field instead of browser upload for huge archives.',
+                'archive' => 'The upload did not reach Laravel. This usually happens with very large export files. Use the local export path field instead of browser upload for huge archives.',
             ]);
     }
 
@@ -161,6 +162,111 @@ class FacebookImportControllerTest extends TestCase
         $this->assertSame(10, $run->messages_imported);
         $this->assertSame(3, $run->messages_skipped);
         $this->assertSame(2, $run->conversations_count);
+        Storage::disk('local')->assertMissing($run->storage_path);
+    }
+
+    public function test_store_accepts_whatsapp_local_source_path_and_runs_import(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $relativeSourcePath = 'data/whatsapp-test-'.uniqid().'/_chat.txt';
+        $sourcePath = base_path($relativeSourcePath);
+
+        File::ensureDirectoryExists(dirname($sourcePath));
+
+        try {
+            file_put_contents($sourcePath, '[25. 3. 2026., 10:08:41 PM] Mama: Bijeljina');
+
+            $this->mock(WhatsappChatImportService::class, function ($mock) use ($sourcePath) {
+                $mock->shouldReceive('importFromPath')
+                    ->once()
+                    ->with($sourcePath, 'Rastko Todorovic')
+                    ->andReturn([
+                        'threads_found' => 1,
+                        'conversations' => 1,
+                        'messages_imported' => 8,
+                        'messages_skipped' => 2,
+                    ]);
+            });
+
+            $this->mock(MessageEmbeddingService::class, function ($mock) {
+                $mock->shouldReceive('generate')
+                    ->once()
+                    ->with(true)
+                    ->andReturn([
+                        'messages_indexed' => 8,
+                        'total_messages' => 8,
+                        'batch_size' => 100,
+                    ]);
+            });
+
+            $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+                'source_path' => $relativeSourcePath,
+                'me_name' => 'Rastko Todorovic',
+            ]);
+
+            $response->assertRedirect();
+            $response->assertSessionHas('success', 'Import completed: 8 messages absorbed, 2 skipped, 1 conversations updated. Embeddings were rebuilt.');
+
+            $run = FacebookImportRun::query()->latest()->first();
+
+            $this->assertNotNull($run);
+            $this->assertSame('completed', $run->status);
+            $this->assertSame('_chat.txt', $run->uploaded_filename);
+            $this->assertSame('local://'.$sourcePath, $run->storage_path);
+        } finally {
+            File::deleteDirectory(dirname($sourcePath));
+        }
+    }
+
+    public function test_store_accepts_whatsapp_export_upload(): void
+    {
+        Storage::fake('local');
+
+        $user = User::factory()->create();
+        $archive = UploadedFile::fake()->createWithContent('_chat.txt', '[25. 3. 2026., 10:08:41 PM] Mama: Bijeljina');
+
+        $this->mock(WhatsappChatImportService::class, function ($mock) {
+            $mock->shouldReceive('importFromPath')
+                ->once()
+                ->withArgs(function (string $path, string $meName) {
+                    return $meName === 'Rastko Todorovic'
+                        && is_file($path)
+                        && str_ends_with($path, '.txt');
+                })
+                ->andReturn([
+                    'threads_found' => 1,
+                    'conversations' => 1,
+                    'messages_imported' => 3,
+                    'messages_skipped' => 1,
+                ]);
+        });
+
+        $this->mock(MessageEmbeddingService::class, function ($mock) {
+            $mock->shouldReceive('generate')
+                ->once()
+                ->with(true)
+                ->andReturn([
+                    'messages_indexed' => 3,
+                    'total_messages' => 3,
+                    'batch_size' => 100,
+                ]);
+        });
+
+        $response = $this->actingAs($user)->post(route('imports.facebook.store'), [
+            'archive' => $archive,
+            'me_name' => 'Rastko Todorovic',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Import completed: 3 messages absorbed, 1 skipped, 1 conversations updated. Embeddings were rebuilt.');
+
+        $run = FacebookImportRun::query()->latest()->first();
+
+        $this->assertNotNull($run);
+        $this->assertSame('completed', $run->status);
+        $this->assertSame('_chat.txt', $run->uploaded_filename);
         Storage::disk('local')->assertMissing($run->storage_path);
     }
 

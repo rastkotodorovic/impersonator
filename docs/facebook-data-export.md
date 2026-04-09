@@ -1,12 +1,13 @@
 # Message Data Export
 
-Documentation of the Facebook Messenger and Instagram message export structure, import pipeline, and resulting database contents.
+Documentation of the Facebook Messenger, Instagram, and WhatsApp message export structures, import pipeline, and resulting database contents.
 
 ## Export Location
 
 ```
 data/your_facebook_activity/messages/
 data/your_instagram_activity/messages/
+data/whatsapp/_chat.txt
 ```
 
 ## Relevant Source Directories
@@ -84,6 +85,21 @@ php artisan import:facebook-messages --path=data/your_instagram_activity/message
 ```
 
 The command scans available source directories, decodes text, skips non-text messages and Instagram attachment placeholders, and batch-upserts into the database. It is idempotent — re-running produces the same data without duplicates. The unique constraint is `(conversation_id, timestamp_ms, sender_name)`.
+
+## WhatsApp Single Chat Export
+
+WhatsApp exports a single conversation as plain text. A typical export includes a `_chat.txt` file and, if media is included, additional attachment files beside it.
+
+Example line format:
+
+```text
+[20. 3. 2026., 5:40:04 PM] Mama: Ee
+```
+
+Notes:
+- Multi-line messages continue on following lines without a repeated timestamp header.
+- System notices and placeholder lines like `Messages and calls are end-to-end encrypted...` and `<Media omitted>` are skipped during import.
+- The authenticated upload page accepts either a direct WhatsApp `.txt` upload, a WhatsApp `.zip`, or a local `_chat.txt` path.
 
 ## UI Upload Flow
 

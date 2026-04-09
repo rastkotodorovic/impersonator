@@ -17,7 +17,7 @@ class StoreFacebookImportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'archive' => ['nullable', 'file', 'mimes:zip', 'max:5242880', 'required_without:source_path'],
+            'archive' => ['nullable', 'file', 'mimes:zip,txt', 'max:5242880', 'required_without:source_path'],
             'source_path' => ['nullable', 'string', 'max:2000', 'required_without:archive'],
             'me_name' => ['required', 'string', 'max:255'],
             'replace_existing' => ['nullable', 'boolean'],
@@ -27,8 +27,8 @@ class StoreFacebookImportRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'archive.required_without' => 'Upload a Facebook or Instagram ZIP archive or provide a local extracted folder path.',
-            'source_path.required_without' => 'Upload a Facebook or Instagram ZIP archive or provide a local extracted folder path.',
+            'archive.required_without' => 'Upload a Facebook, Instagram, or WhatsApp export file or provide a local export path.',
+            'source_path.required_without' => 'Upload a Facebook, Instagram, or WhatsApp export file or provide a local export path.',
         ];
     }
 
@@ -38,7 +38,7 @@ class StoreFacebookImportRequest extends FormRequest
             $fallbackValidator = Validator::make([], []);
             $fallbackValidator->errors()->add(
                 'archive',
-                'The ZIP upload did not reach Laravel. This usually happens with very large Facebook or Instagram exports. Use the local extracted folder path field instead of browser upload for huge archives.'
+                'The upload did not reach Laravel. This usually happens with very large export files. Use the local export path field instead of browser upload for huge archives.'
             );
 
             throw (new ValidationException($fallbackValidator))

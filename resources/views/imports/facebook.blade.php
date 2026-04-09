@@ -49,32 +49,32 @@
             <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <h3 class="text-lg font-medium text-gray-900">Upload Facebook or Instagram Export</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Upload Message Export</h3>
                         <p class="mt-2 text-sm text-gray-500">
-                            Upload a Facebook Messenger or Instagram messages ZIP export or point the app at an already extracted local messages folder. The app imports the JSON message history into PostgreSQL and rebuilds embeddings immediately.
+                            Upload a Facebook Messenger or Instagram messages ZIP export, or a WhatsApp single-chat export `.txt` or `.zip`. You can also point the app at an already extracted local export path. The app imports the message history into PostgreSQL and rebuilds embeddings immediately.
                         </p>
 
                         <form method="POST" action="{{ route('imports.facebook.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" x-data="{ submitting: false }" @submit="submitting = true">
                             @csrf
 
                             <div>
-                                <label for="archive" class="block text-sm font-medium text-gray-700">Messages ZIP archive</label>
-                                <input type="file" name="archive" id="archive" accept=".zip"
+                                <label for="archive" class="block text-sm font-medium text-gray-700">Export file</label>
+                                <input type="file" name="archive" id="archive" accept=".zip,.txt"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                        >
-                                <p class="mt-2 text-xs text-gray-500">Works with Facebook Messenger and Instagram exports. For very large archives, use the local folder path field below instead.</p>
+                                <p class="mt-2 text-xs text-gray-500">Works with Facebook Messenger and Instagram ZIP archives, plus WhatsApp exported chat `.txt` or `.zip` files. For very large exports, use the local path field below instead.</p>
                                 @error('archive')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label for="source_path" class="block text-sm font-medium text-gray-700">Local extracted folder path</label>
+                                <label for="source_path" class="block text-sm font-medium text-gray-700">Local export path</label>
                                 <input type="text" name="source_path" id="source_path"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                        value="{{ old('source_path') }}"
-                                       placeholder="data/your_facebook_activity/messages or data/your_instagram_activity/messages">
-                                <p class="mt-2 text-xs text-gray-500">Best for very large exports. Extract the ZIP locally first, then point this field to `your_facebook_activity/messages`, `your_instagram_activity/messages`, or the ZIP file path on this machine.</p>
+                                       placeholder="data/your_facebook_activity/messages, data/your_instagram_activity/messages, or data/whatsapp/_chat.txt">
+                                <p class="mt-2 text-xs text-gray-500">Best for very large exports. Point this field to `your_facebook_activity/messages`, `your_instagram_activity/messages`, a WhatsApp `_chat.txt`, or a ZIP file path on this machine.</p>
                                 @error('source_path')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -86,7 +86,7 @@
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                        value="{{ old('me_name', 'Rastko Todorovic') }}"
                                        placeholder="Your full name as shown in the export" required>
-                                <p class="mt-2 text-xs text-gray-500">Used to mark which imported messages are yours across Facebook Messenger or Instagram exports.</p>
+                                <p class="mt-2 text-xs text-gray-500">Used to mark which imported messages are yours across Facebook Messenger, Instagram, or WhatsApp exports.</p>
                                 @error('me_name')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -209,13 +209,24 @@
                                 <li>Download the ZIP, then upload it here or point to `your_instagram_activity/messages`.</li>
                             </ol>
                         </div>
+
+                        <div class="rounded-lg border border-gray-200 p-4 lg:col-span-2">
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-900">WhatsApp Single Chat</h4>
+                            <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-600">
+                                <li>Open the WhatsApp conversation you want to reuse in the app.</li>
+                                <li>Choose <span class="font-medium text-gray-900">Export chat</span>.</li>
+                                <li>Export <span class="font-medium text-gray-900">without media</span> for the simplest upload, or include media if you want WhatsApp to give you a ZIP archive.</li>
+                                <li>Upload the exported `.txt` or `.zip` file here, or point the local path field at the exported `_chat.txt` file.</li>
+                            </ol>
+                        </div>
                     </div>
 
                     <div class="mt-6 rounded-md bg-gray-50 p-4 text-sm text-gray-600">
                         <p class="font-medium text-gray-900">What gets imported</p>
-                        <p class="mt-1">The importer reads only message data from `inbox`, `e2ee_cutover`, and `message_requests`. Other account data in the archive is ignored.</p>
+                        <p class="mt-1">Facebook and Instagram imports read only message data from `inbox`, `e2ee_cutover`, and `message_requests`. Other account data in the archive is ignored.</p>
                         <p class="mt-2">Instagram attachment placeholders like “sent an attachment” are skipped so they do not pollute retrieval context.</p>
-                        <p class="mt-2">If the full export is too large to upload through the browser, extract it locally and use the local folder path field instead.</p>
+                        <p class="mt-2">WhatsApp exported chat system notices and media placeholders like `&lt;Media omitted&gt;` are skipped for the same reason.</p>
+                        <p class="mt-2">If the full export is too large to upload through the browser, extract it locally and use the local path field instead.</p>
                     </div>
                 </div>
             </div>

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\FacebookImportRun;
 use App\Services\FacebookMessageImportService;
 use App\Services\MessageEmbeddingService;
+use App\Services\WhatsappChatImportService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ class ProcessFacebookImport implements ShouldQueue
     public function handle(
         FacebookMessageImportService $importService,
         MessageEmbeddingService $embeddingService,
+        WhatsappChatImportService $whatsappImportService,
     ): void {
         $importRun = FacebookImportRun::findOrFail($this->importRunId);
         $tempDir = storage_path('app/tmp/facebook-imports/'.$importRun->id.'-'.uniqid());
@@ -37,13 +39,16 @@ class ProcessFacebookImport implements ShouldQueue
         ]);
 
         try {
-            $messagesPath = $this->resolveMessagesPath($importRun->storage_path, $tempDir);
+            $importSource = $this->resolveImportSource($importRun->storage_path, $tempDir);
 
             if ($importRun->replace_existing) {
                 $this->replaceExistingHistory();
             }
 
-            $importResult = $importService->importFromPath($messagesPath, $importRun->me_name);
+            $importResult = $importSource['type'] === 'whatsapp'
+                ? $whatsappImportService->importFromPath($importSource['path'], $importRun->me_name)
+                : $importService->importFromPath($importSource['path'], $importRun->me_name);
+
             $embeddingService->generate(true);
 
             $importRun->update([
@@ -70,35 +75,45 @@ class ProcessFacebookImport implements ShouldQueue
         }
     }
 
-    protected function resolveMessagesPath(string $storagePath, string $tempDir): string
+    protected function resolveImportSource(string $storagePath, string $tempDir): array
     {
         if (str_starts_with($storagePath, 'local://')) {
             $sourcePath = substr($storagePath, strlen('local://'));
 
             if (is_dir($sourcePath)) {
-                if ($this->isValidMessagesDirectory($sourcePath)) {
-                    return $sourcePath;
-                }
-
-                return $this->locateMessagesDirectory($sourcePath);
+                return $this->locateImportSource($sourcePath);
             }
 
             if (is_file($sourcePath) && str_ends_with(strtolower($sourcePath), '.zip')) {
                 return $this->extractArchive($sourcePath, $tempDir);
             }
 
-            throw new \RuntimeException('The local import path does not exist or is not a ZIP / extracted Facebook or Instagram messages directory.');
+            if ($this->isValidWhatsappExport($sourcePath)) {
+                return [
+                    'type' => 'whatsapp',
+                    'path' => $sourcePath,
+                ];
+            }
+
+            throw new \RuntimeException('The local import path does not exist or is not a supported Facebook, Instagram, or WhatsApp export.');
         }
 
-        $archivePath = Storage::disk('local')->path($storagePath);
+        $uploadedPath = Storage::disk('local')->path($storagePath);
 
-        return $this->extractArchive($archivePath, $tempDir);
+        if ($this->isValidWhatsappExport($uploadedPath)) {
+            return [
+                'type' => 'whatsapp',
+                'path' => $uploadedPath,
+            ];
+        }
+
+        return $this->extractArchive($uploadedPath, $tempDir);
     }
 
-    protected function extractArchive(string $archivePath, string $destination): string
+    protected function extractArchive(string $archivePath, string $destination): array
     {
         if (! class_exists(\ZipArchive::class)) {
-            throw new \RuntimeException('PHP ZipArchive extension is required for Facebook or Instagram imports.');
+            throw new \RuntimeException('PHP ZipArchive extension is required for ZIP imports.');
         }
 
         File::ensureDirectoryExists($destination);
@@ -107,16 +122,46 @@ class ProcessFacebookImport implements ShouldQueue
         $result = $zip->open($archivePath);
 
         if ($result !== true) {
-            throw new \RuntimeException('Unable to open uploaded Facebook or Instagram export archive.');
+            throw new \RuntimeException('Unable to open the uploaded export archive.');
         }
 
         $zip->extractTo($destination);
         $zip->close();
 
-        return $this->locateMessagesDirectory($destination);
+        return $this->locateImportSource($destination);
     }
 
-    protected function locateMessagesDirectory(string $destination): string
+    protected function locateImportSource(string $path): array
+    {
+        if ($this->isValidMessagesDirectory($path)) {
+            return [
+                'type' => 'facebook',
+                'path' => $path,
+            ];
+        }
+
+        $messagesDirectory = $this->locateMessagesDirectory($path, false);
+
+        if ($messagesDirectory !== null) {
+            return [
+                'type' => 'facebook',
+                'path' => $messagesDirectory,
+            ];
+        }
+
+        $whatsappExport = $this->locateWhatsappExport($path);
+
+        if ($whatsappExport !== null) {
+            return [
+                'type' => 'whatsapp',
+                'path' => $whatsappExport,
+            ];
+        }
+
+        throw new \RuntimeException('The uploaded export does not contain a supported Facebook, Instagram, or WhatsApp messages file.');
+    }
+
+    protected function locateMessagesDirectory(string $destination, bool $throwOnFailure = true): ?string
     {
         $candidates = [
             $destination.'/your_facebook_activity/messages',
@@ -147,7 +192,11 @@ class ProcessFacebookImport implements ShouldQueue
             }
         }
 
-        throw new \RuntimeException('The uploaded archive does not contain a valid Facebook or Instagram messages export.');
+        if ($throwOnFailure) {
+            throw new \RuntimeException('The uploaded archive does not contain a valid Facebook or Instagram messages export.');
+        }
+
+        return null;
     }
 
     protected function isValidMessagesDirectory(string $path): bool
@@ -163,6 +212,48 @@ class ProcessFacebookImport implements ShouldQueue
         }
 
         return false;
+    }
+
+    protected function locateWhatsappExport(string $path): ?string
+    {
+        if ($this->isValidWhatsappExport($path)) {
+            return $path;
+        }
+
+        if (! is_dir($path)) {
+            return null;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $item) {
+            if (! $item->isFile()) {
+                continue;
+            }
+
+            if ($this->isValidWhatsappExport($item->getPathname())) {
+                return $item->getPathname();
+            }
+        }
+
+        return null;
+    }
+
+    protected function isValidWhatsappExport(string $path): bool
+    {
+        if (! is_file($path) || ! str_ends_with(strtolower($path), '.txt')) {
+            return false;
+        }
+
+        $contents = file_get_contents($path, false, null, 0, 4096);
+
+        if ($contents === false) {
+            return false;
+        }
+
+        return preg_match('/^(\[[^\]]+\]\s.+?:\s|\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}.*,\s.*\s-\s.+?:\s)/mu', $contents) === 1;
     }
 
     protected function replaceExistingHistory(): void
