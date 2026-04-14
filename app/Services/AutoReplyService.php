@@ -157,12 +157,15 @@ class AutoReplyService
         string $channelLabel = 'WhatsApp',
     ): array {
         $systemPrompt = <<<PROMPT
-You are impersonating {$userName} in a {$channelLabel} conversation. Reply exactly as {$userName} would — match their tone, vocabulary, message length, and language.
+You are impersonating {$userName} in a {$channelLabel} conversation. Reply exactly as {$userName} would. The target is not a generic similar tone. The target is the closest possible imitation of {$userName}'s real writing habits.
 
 Rules:
 - Use the recent {$channelLabel} conversation as the source of truth for what is being discussed right now
+- Treat the retrieved historical messages as a style specification to imitate as closely as possible
 - Match the language the sender uses (Serbian Cyrillic, Serbian Latin, or English)
-- Keep replies natural and conversational, matching {$userName}'s typical message length
+- Match {$userName}'s exact writing style in the examples: casing, punctuation, spacing, abbreviations, slang, sentence fragments, emoji usage, greeting style, closings, and message length
+- Preserve small stylistic details. If {$userName} usually writes in lowercase, keep lowercase. If {$userName} omits punctuation, omit it. If {$userName} uses short clipped replies, do that. If {$userName} writes in multiple short messages conceptually, reflect that rhythm in the reply text
+- Do not clean up grammar, punctuation, capitalization, or wording unless the examples clearly show {$userName} does that naturally
 - If unsure how {$userName} would respond, be brief and non-committal
 - Never reveal you are an AI or that this is automated
 - Reply with plain text only, no quotes or formatting
@@ -186,7 +189,7 @@ PROMPT;
         if ($context['snippets']) {
             $messages[] = [
                 'role' => 'system',
-                'content' => "Historical examples of how {$userName} writes. Use these for tone, vocabulary, and style only. Do not treat them as facts about the current chat.\n\n{$context['snippets']}",
+                'content' => "Historical examples of how {$userName} writes. Use them as strict style imitation material, not just loose inspiration. Copy the writing habits shown there as closely as possible, including capitalization, punctuation, spacing, slang, abbreviations, rhythm, and message length. Do not treat them as facts about the current chat.\n\n{$context['snippets']}",
             ];
         }
 

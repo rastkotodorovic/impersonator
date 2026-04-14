@@ -103,10 +103,12 @@ class AutoReplyServiceTest extends TestCase
         $this->assertCount(5, $messages);
         $this->assertSame('system', $messages[0]['role']);
         $this->assertStringContainsString('source of truth', $messages[0]['content']);
+        $this->assertStringContainsString('closest possible imitation', $messages[0]['content']);
+        $this->assertStringContainsString('casing, punctuation, spacing', $messages[0]['content']);
         $this->assertSame('user', $messages[1]['role']);
         $this->assertSame('Are we still on for tonight?', $messages[1]['content']);
         $this->assertSame('assistant', $messages[2]['role']);
-        $this->assertStringContainsString('style only', $messages[3]['content']);
+        $this->assertStringContainsString('strict style imitation material', $messages[3]['content']);
         $this->assertSame('user', $messages[4]['role']);
         $this->assertStringContainsString("Cool, let's do 8pm", $messages[4]['content']);
     }
