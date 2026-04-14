@@ -13,6 +13,7 @@ class AutoReplyContact extends Model
         'phone_number',
         'identifier',
         'name',
+        'preferred_conversation_id',
         'ai_additional_instructions',
         'is_active',
     ];
@@ -27,6 +28,11 @@ class AutoReplyContact extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function preferredConversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class, 'preferred_conversation_id');
     }
 
     public static function normalizePhone(string $phone): string

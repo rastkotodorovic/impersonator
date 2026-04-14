@@ -16,9 +16,14 @@ class MessageRetrievalService
         protected PgvectorService $pgvector,
     ) {}
 
-    public function retrieveContext(string $incomingMessage, ?User $user = null, int $matchLimit = 15): array
+    public function retrieveContext(
+        string $incomingMessage,
+        ?User $user = null,
+        int $matchLimit = 15,
+        ?int $preferredConversationId = null,
+    ): array
     {
-        $search = $this->searchMessages($incomingMessage, $user, $matchLimit);
+        $search = $this->searchMessages($incomingMessage, $user, $matchLimit, $preferredConversationId);
         $matches = $search['matches'];
 
         if ($matches->isEmpty()) {
@@ -40,11 +45,41 @@ class MessageRetrievalService
         ];
     }
 
-    protected function searchMessages(string $query, ?User $user, int $limit): array
+    protected function searchMessages(string $query, ?User $user, int $limit, ?int $preferredConversationId = null): array
     {
         $openai = OpenAIService::forEmbeddings($user);
         $embeddings = $openai->embeddings([$query]);
-        $hits = $this->pgvector->hybridSearchMessages($embeddings[0], $query, $limit);
+
+        if ($preferredConversationId === null) {
+            return $this->hydrateSearchResults(
+                $this->pgvector->hybridSearchMessages($embeddings[0], $query, $limit),
+            );
+        }
+
+        $preferredHits = $this->pgvector->hybridSearchMessages(
+            $embeddings[0],
+            $query,
+            $limit,
+            $preferredConversationId,
+        );
+
+        if (count($preferredHits) >= $limit) {
+            return $this->hydrateSearchResults($preferredHits);
+        }
+
+        $fallbackHits = $this->pgvector->hybridSearchMessages($embeddings[0], $query, $limit * 2);
+        $hits = collect($preferredHits)
+            ->merge($fallbackHits)
+            ->unique('id')
+            ->take($limit)
+            ->values()
+            ->all();
+
+        return $this->hydrateSearchResults($hits);
+    }
+
+    protected function hydrateSearchResults(array $hits): array
+    {
         $messageIds = array_column($hits, 'id');
 
         if (empty($messageIds)) {

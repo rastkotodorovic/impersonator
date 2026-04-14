@@ -16,6 +16,7 @@ class StoreAutoReplyContactRequest extends FormRequest
         return [
             'identifier' => ['required', 'string', 'max:255'],
             'name' => ['nullable', 'string', 'max:255'],
+            'preferred_conversation_id' => ['nullable', 'integer', 'exists:conversations,id'],
             'ai_additional_instructions' => ['nullable', 'string', 'max:2000'],
         ];
     }

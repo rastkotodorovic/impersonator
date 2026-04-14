@@ -20,7 +20,7 @@
                 <div class="p-6">
                     <h3 class="text-lg font-medium text-gray-900">Add Contact</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Add a WhatsApp number to auto-reply to.
+                        Add a WhatsApp number to auto-reply to and optionally bias the style retrieval toward one imported conversation.
                     </p>
 
                     <form method="POST" action="{{ route('whatsapp.auto-reply.contacts.store') }}" class="mt-4 space-y-4">
@@ -43,6 +43,23 @@
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                                        value="{{ old('name') }}">
                             </div>
+                        </div>
+                        <div>
+                            <label for="preferred_conversation_id" class="block text-sm font-medium text-gray-700">Impersonation source conversation</label>
+                            <select name="preferred_conversation_id"
+                                    id="preferred_conversation_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                                <option value="">All imported conversations</option>
+                                @foreach($availableConversations as $conversation)
+                                    <option value="{{ $conversation->id }}" @selected((string) old('preferred_conversation_id') === (string) $conversation->id)>
+                                        {{ $conversation->title }} ({{ ucfirst($conversation->source) }}, {{ $conversation->participant_count }} participants)
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">If selected, this chat is searched first for tone and phrasing examples for this contact. If it has too little signal, the rest of your imported library still acts as fallback.</p>
+                            @error('preferred_conversation_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label for="ai_additional_instructions" class="block text-sm font-medium text-gray-700">Custom AI Instructions (optional)</label>
@@ -80,6 +97,7 @@
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Identifier</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Source Chat</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Custom Prompt</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                                         <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
@@ -90,6 +108,14 @@
                                         <tr>
                                             <td class="whitespace-nowrap px-4 py-3 text-sm font-mono text-gray-900">{{ $contact->identifier }}</td>
                                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{{ $contact->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-500">
+                                                @if($contact->preferredConversation)
+                                                    {{ $contact->preferredConversation->title }}
+                                                    <span class="text-xs text-gray-400">({{ $contact->preferredConversation->source }})</span>
+                                                @else
+                                                    All conversations
+                                                @endif
+                                            </td>
                                             <td class="px-4 py-3 text-sm text-gray-500">
                                                 @if($contact->ai_additional_instructions)
                                                     <p class="max-w-md whitespace-pre-line">{{ \Illuminate\Support\Str::limit($contact->ai_additional_instructions, 140) }}</p>

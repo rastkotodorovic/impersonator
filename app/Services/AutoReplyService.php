@@ -48,7 +48,13 @@ class AutoReplyService
         $typingStarted = $this->safelyStartTyping($sessionName, $chatId);
 
         try {
-            $context = $this->retrieval->retrieveContext($incomingMessage, $user);
+            $contact = $this->resolveContact($user, $senderPhone);
+            $context = $this->retrieval->retrieveContext(
+                $incomingMessage,
+                $user,
+                15,
+                $contact?->preferred_conversation_id,
+            );
 
             $recentConversation = $this->loadRecentConversation(
                 $user,
@@ -62,7 +68,7 @@ class AutoReplyService
                 $incomingMessage,
                 $context,
                 $recentConversation,
-                $this->resolveAdditionalInstructions($user, $senderPhone),
+                $contact?->ai_additional_instructions,
             );
 
             $trace->update([
@@ -191,11 +197,16 @@ PROMPT;
 
     protected function resolveAdditionalInstructions(User $user, string $senderPhone): ?string
     {
+        return $this->resolveContact($user, $senderPhone)?->ai_additional_instructions;
+    }
+
+    protected function resolveContact(User $user, string $senderPhone): ?AutoReplyContact
+    {
         return AutoReplyContact::query()
             ->where('user_id', $user->id)
             ->where('channel', 'whatsapp')
             ->where('identifier', $senderPhone)
-            ->value('ai_additional_instructions');
+            ->first();
     }
 
     protected function loadRecentConversation(User $user, string $senderPhone, ?int $excludeLogId = null): array

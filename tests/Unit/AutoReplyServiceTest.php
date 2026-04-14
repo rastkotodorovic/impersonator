@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Integrations\Waha\WahaService;
 use App\Models\AutoReplyContact;
+use App\Models\Conversation;
 use App\Models\User;
 use App\Models\UserOpenaiCredential;
 use App\Models\WhatsappMessageLog;
@@ -160,6 +161,71 @@ class AutoReplyServiceTest extends TestCase
         );
     }
 
+    public function test_generate_and_send_reply_prioritizes_contact_preferred_conversation(): void
+    {
+        config()->set('services.waha.api_url', 'http://waha.test');
+        config()->set('services.waha.api_key', null);
+
+        $user = User::factory()->create();
+        $conversation = Conversation::create([
+            'thread_path' => 'inbox/preferred-thread',
+            'title' => 'Preferred Style Chat',
+            'source' => 'inbox',
+            'participants' => ['Rastko', 'Dzil'],
+            'participant_count' => 2,
+            'is_group_chat' => false,
+        ]);
+
+        AutoReplyContact::create([
+            'user_id' => $user->id,
+            'channel' => 'whatsapp',
+            'phone_number' => '38164111222',
+            'identifier' => '38164111222',
+            'preferred_conversation_id' => $conversation->id,
+            'is_active' => true,
+        ]);
+
+        UserOpenaiCredential::create([
+            'user_id' => $user->id,
+            'auth_method' => 'api_key',
+            'api_key' => 'sk-test-key-12345',
+        ]);
+
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'On my way.']],
+                ],
+                'usage' => ['total_tokens' => 12],
+                'model' => 'gpt-4o',
+            ]),
+            'http://waha.test/api/default/presence' => Http::sequence()
+                ->push(['success' => true], 200)
+                ->push(['success' => true], 200),
+            'http://waha.test/api/sendText' => Http::response(['id' => 'msg-1'], 200),
+        ]);
+
+        $retrieval = $this->mock(MessageRetrievalService::class, function ($mock) use ($user, $conversation) {
+            $mock->shouldReceive('retrieveContext')
+                ->once()
+                ->with('Where are you?', $user, 15, $conversation->id)
+                ->andReturn([
+                    'count' => 0,
+                    'hits' => [],
+                    'snippet_blocks' => [],
+                    'snippets' => '',
+                ]);
+        });
+
+        $service = new TestableAutoReplyService(
+            $retrieval,
+            new ChannelManager(new WhatsappChannel(new WahaService)),
+            new WahaService,
+        );
+
+        $service->generateAndSendReply($user, '38164111222', 'Where are you?', 'default');
+    }
+
     public function test_generate_and_send_reply_toggles_typing_presence_around_reply(): void
     {
         config()->set('services.waha.api_url', 'http://waha.test');
@@ -190,7 +256,7 @@ class AutoReplyServiceTest extends TestCase
         $retrieval = $this->mock(MessageRetrievalService::class, function ($mock) use ($user) {
             $mock->shouldReceive('retrieveContext')
                 ->once()
-                ->with('Where are you?', $user)
+                ->with('Where are you?', $user, 15, null)
                 ->andReturn([
                     'count' => 0,
                     'hits' => [],

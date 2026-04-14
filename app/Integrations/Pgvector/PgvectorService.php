@@ -42,16 +42,23 @@ class PgvectorService
         );
     }
 
-    public function hybridSearchMessages(array $embedding, string $query, int $limit): array
+    public function hybridSearchMessages(
+        array $embedding,
+        string $query,
+        int $limit,
+        ?int $conversationId = null,
+    ): array
     {
         $candidateLimit = max($limit * 4, 40);
         $queryVector = $this->toVectorLiteral($embedding);
+        $conversationFilterSql = $conversationId !== null ? ' AND m.conversation_id = ?' : '';
+        $conversationBindings = $conversationId !== null ? [$conversationId] : [];
 
         if ($this->normalizeSearchQuery($query) === '') {
             return array_map(
                 fn (stdClass $row) => (array) $row,
                 DB::select(
-                    <<<'SQL'
+                    <<<SQL
                         SELECT
                             me.message_id AS id,
                             1 - (me.embedding <=> ?::vector) AS vector_score,
@@ -61,10 +68,11 @@ class PgvectorService
                         JOIN messages m ON m.id = me.message_id
                         JOIN conversations c ON c.id = m.conversation_id
                         WHERE c.is_group_chat = false
+                        {$conversationFilterSql}
                         ORDER BY me.embedding <=> ?::vector, m.sent_at DESC
                         LIMIT ?
                     SQL,
-                    [$queryVector, $queryVector, $queryVector, $limit],
+                    [...[$queryVector, $queryVector], ...$conversationBindings, ...[$queryVector, $limit]],
                 ),
             );
         }
@@ -72,7 +80,7 @@ class PgvectorService
         return array_map(
             fn (stdClass $row) => (array) $row,
             DB::select(
-                <<<'SQL'
+                <<<SQL
                     WITH input AS (
                         SELECT
                             ?::vector AS query_embedding,
@@ -89,6 +97,7 @@ class PgvectorService
                         JOIN conversations c ON c.id = m.conversation_id
                         CROSS JOIN input
                         WHERE c.is_group_chat = false
+                            {$conversationFilterSql}
                         ORDER BY me.embedding <=> input.query_embedding, m.sent_at DESC
                         LIMIT ?
                     ),
@@ -103,6 +112,7 @@ class PgvectorService
                         JOIN conversations c ON c.id = m.conversation_id
                         CROSS JOIN input
                         WHERE c.is_group_chat = false
+                            {$conversationFilterSql}
                             AND me.content_search @@ input.query_ts
                         ORDER BY ts_rank_cd(me.content_search, input.query_ts) DESC, m.sent_at DESC
                         LIMIT ?
@@ -130,7 +140,15 @@ class PgvectorService
                     ORDER BY ranking_score DESC, sent_at DESC
                     LIMIT ?
                 SQL,
-                [$queryVector, $query, $candidateLimit, $candidateLimit, $limit],
+                [
+                    $queryVector,
+                    $query,
+                    ...$conversationBindings,
+                    $candidateLimit,
+                    ...$conversationBindings,
+                    $candidateLimit,
+                    $limit,
+                ],
             ),
         );
     }

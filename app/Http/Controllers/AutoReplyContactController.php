@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAutoReplyContactRequest;
 use App\Models\AutoReplyContact;
+use App\Models\Conversation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,8 +15,15 @@ class AutoReplyContactController extends Controller
     {
         $contacts = $request->user()->autoReplyContacts()
             ->where('channel', 'whatsapp')
+            ->with('preferredConversation')
             ->orderBy('name')
             ->get();
+
+        $availableConversations = Conversation::query()
+            ->where('is_group_chat', false)
+            ->orderBy('title')
+            ->orderBy('source')
+            ->get(['id', 'title', 'source', 'participant_count']);
 
         $recentLogs = $request->user()->whatsappMessageLogs()
             ->with('aiTrace')
@@ -23,7 +31,7 @@ class AutoReplyContactController extends Controller
             ->take(50)
             ->get();
 
-        return view('whatsapp.auto-reply', compact('contacts', 'recentLogs'));
+        return view('whatsapp.auto-reply', compact('contacts', 'availableConversations', 'recentLogs'));
     }
 
     public function store(StoreAutoReplyContactRequest $request): RedirectResponse
@@ -40,6 +48,7 @@ class AutoReplyContactController extends Controller
             [
                 'phone_number' => $normalized,
                 'name' => $validated['name'] ?? null,
+                'preferred_conversation_id' => $validated['preferred_conversation_id'] ?? null,
                 'ai_additional_instructions' => $validated['ai_additional_instructions'] ?? null,
                 'is_active' => true,
             ],
