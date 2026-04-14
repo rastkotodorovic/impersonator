@@ -7,6 +7,7 @@ use App\Jobs\ProcessWhatsappAutoReply;
 use App\Models\AutoReplyContact;
 use App\Models\WhatsappMessageLog;
 use App\Models\WhatsappSession;
+use App\Services\Ai\ChatProviderManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,6 +16,7 @@ class WhatsappController extends Controller
 {
     public function __construct(
         protected WahaService $waha,
+        protected ChatProviderManager $chatProviders,
     ) {}
 
     public function index(Request $request): View
@@ -221,8 +223,8 @@ class WhatsappController extends Controller
             return;
         }
 
-        // Check user has OpenAI credentials
-        if (! $user->openaiCredential?->hasValidCredential()) {
+        // Check user has a configured chat provider credential
+        if (! $this->chatProviders->hasConfiguredProvider($user)) {
             return;
         }
 

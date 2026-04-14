@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Integrations\OpenAI\OpenAIService;
 use App\Integrations\Pgvector\PgvectorService;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Ai\EmbeddingProviderManager;
 use Illuminate\Support\Collection;
 
 class MessageRetrievalService
@@ -14,6 +14,7 @@ class MessageRetrievalService
 
     public function __construct(
         protected PgvectorService $pgvector,
+        protected EmbeddingProviderManager $embeddingProviders,
     ) {}
 
     public function retrieveContext(
@@ -47,8 +48,7 @@ class MessageRetrievalService
 
     protected function searchMessages(string $query, ?User $user, int $limit, ?int $preferredConversationId = null): array
     {
-        $openai = OpenAIService::forEmbeddings($user);
-        $embeddings = $openai->embeddings([$query]);
+        $embeddings = $this->embeddingProviders->forUser($user)->embeddings([$query]);
 
         if ($preferredConversationId === null) {
             return $this->hydrateSearchResults(

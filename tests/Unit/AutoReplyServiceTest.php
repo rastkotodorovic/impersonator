@@ -5,9 +5,10 @@ namespace Tests\Unit;
 use App\Integrations\Waha\WahaService;
 use App\Models\AutoReplyContact;
 use App\Models\Conversation;
+use App\Models\UserAiCredential;
 use App\Models\User;
-use App\Models\UserOpenaiCredential;
 use App\Models\WhatsappMessageLog;
+use App\Services\Ai\ChatProviderManager;
 use App\Services\AutoReplyService;
 use App\Services\ChannelManager;
 use App\Services\Channels\WhatsappChannel;
@@ -187,8 +188,9 @@ class AutoReplyServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        UserOpenaiCredential::create([
+        UserAiCredential::create([
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
             'api_key' => 'sk-test-key-12345',
         ]);
@@ -235,8 +237,9 @@ class AutoReplyServiceTest extends TestCase
 
         $user = User::factory()->create();
 
-        UserOpenaiCredential::create([
+        UserAiCredential::create([
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
             'api_key' => 'sk-test-key-12345',
         ]);
@@ -306,7 +309,7 @@ class TestableAutoReplyService extends AutoReplyService
         ChannelManager $channels,
         ?WahaService $waha = null,
     ) {
-        parent::__construct($retrieval, $channels, $waha ?? new WahaService);
+        parent::__construct($retrieval, new ChatProviderManager, $channels, $waha ?? new WahaService);
     }
 
     public function exposedLoadRecentConversation(User $user, string $senderPhone, ?int $excludeLogId = null): array

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Integrations\OpenAI\OpenAIService;
 use App\Integrations\Waha\WahaService;
 use App\Models\AiTrace;
 use App\Models\AutoReplyContact;
 use App\Models\User;
 use App\Models\WhatsappMessageLog;
+use App\Services\Ai\ChatProviderManager;
 
 class AutoReplyService
 {
@@ -15,6 +15,7 @@ class AutoReplyService
 
     public function __construct(
         protected MessageRetrievalService $retrieval,
+        protected ChatProviderManager $chatProviders,
         protected ChannelManager $channels,
         protected WahaService $waha,
     ) {}
@@ -78,9 +79,9 @@ class AutoReplyService
                 'final_prompt' => $messages,
             ]);
 
-            $openai = OpenAIService::forUser($user);
+            $chatProvider = $this->chatProviders->forUser($user);
             $startedAt = microtime(true);
-            $completion = $openai->chatCompletionWithMetadata($messages);
+            $completion = $chatProvider->chatCompletionWithMetadata($messages);
             $latencyMs = (int) round((microtime(true) - $startedAt) * 1000);
             $reply = $completion['content'];
 
@@ -97,7 +98,7 @@ class AutoReplyService
             $trace->update([
                 'outgoing_whatsapp_message_log_id' => $outgoingLog->id,
                 'status' => 'completed',
-                'model' => $completion['model'] ?? $openai->modelName(),
+                'model' => $completion['model'] ?? $chatProvider->modelName(),
                 'model_response' => $reply,
                 'usage' => $completion['usage'],
                 'latency_ms' => $latencyMs,

@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
+use App\Models\UserAiCredential;
 use App\Models\User;
-use App\Models\UserOpenaiCredential;
 use App\Integrations\OpenAI\OpenAIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -19,8 +19,9 @@ class OpenAIServiceTest extends TestCase
 
         $user = User::factory()->create();
 
-        UserOpenaiCredential::create([
+        UserAiCredential::create([
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
             'api_key' => 'sk-test-key-12345',
         ]);
@@ -49,8 +50,9 @@ class OpenAIServiceTest extends TestCase
 
         $user = User::factory()->create();
 
-        UserOpenaiCredential::create([
+        UserAiCredential::create([
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
             'api_key' => 'sk-user-key-67890',
         ]);

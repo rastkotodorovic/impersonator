@@ -32,9 +32,9 @@
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <h3 class="text-lg font-medium text-gray-900">OpenAI</h3>
-                        <p class="mt-2 text-sm text-gray-500">Connect an API key or sign in with OpenAI so the app can generate replies and embeddings.</p>
-                        <a href="{{ route('openai.index') }}"
+                        <h3 class="text-lg font-medium text-gray-900">AI</h3>
+                        <p class="mt-2 text-sm text-gray-500">Configure separate providers for chat completions and embeddings, including OpenAI, Claude, and Voyage.</p>
+                        <a href="{{ route('ai.index') }}"
                            class="mt-4 inline-flex items-center rounded-md bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
                             Open Settings
                         </a>

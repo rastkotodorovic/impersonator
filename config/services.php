@@ -41,6 +41,11 @@ return [
         'session_name' => env('WAHA_SESSION_NAME', 'default'),
     ],
 
+    'ai' => [
+        'default_chat_provider' => env('AI_DEFAULT_CHAT_PROVIDER', 'openai'),
+        'default_embedding_provider' => env('AI_DEFAULT_EMBEDDING_PROVIDER', 'openai'),
+    ],
+
     'openai' => [
         'client_id' => env('OPENAI_CLIENT_ID'),
         'client_secret' => env('OPENAI_CLIENT_SECRET'),
@@ -48,6 +53,16 @@ return [
         'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-4o'),
         'api_key' => env('OPENAI_API_KEY'),
         'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+    ],
+
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'default_model' => env('ANTHROPIC_DEFAULT_MODEL', 'claude-3-7-sonnet-latest'),
+    ],
+
+    'voyage' => [
+        'api_key' => env('VOYAGE_API_KEY'),
+        'embedding_model' => env('VOYAGE_EMBEDDING_MODEL', 'voyage-3-lite'),
     ],
 
 ];

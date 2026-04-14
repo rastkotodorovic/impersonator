@@ -2,13 +2,15 @@
 
 namespace App\Integrations\OpenAI;
 
+use App\Contracts\ChatCompletionProviderInterface;
+use App\Contracts\EmbeddingProviderInterface;
 use App\Models\User;
-use App\Models\UserOpenaiCredential;
+use App\Models\UserAiCredential;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-class OpenAIService
+class OpenAIService implements ChatCompletionProviderInterface, EmbeddingProviderInterface
 {
     public const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
 
@@ -111,20 +113,20 @@ class OpenAIService
         return $this->model;
     }
 
-    public static function refreshOAuthToken(UserOpenaiCredential $credential): UserOpenaiCredential
+    public static function refreshOAuthToken(UserAiCredential $credential): UserAiCredential
     {
         $response = Http::asForm()->post('https://auth.openai.com/oauth/token', [
             'grant_type' => 'refresh_token',
-            'refresh_token' => $credential->oauth_refresh_token,
+            'refresh_token' => $credential->refresh_token,
             'client_id' => config('services.openai.client_id'),
             'client_secret' => config('services.openai.client_secret'),
         ]);
 
         if (! $response->successful()) {
             $credential->update([
-                'oauth_access_token' => null,
-                'oauth_refresh_token' => null,
-                'oauth_token_expires_at' => null,
+                'access_token' => null,
+                'refresh_token' => null,
+                'token_expires_at' => null,
             ]);
 
             throw new RuntimeException('Failed to refresh OpenAI OAuth token. Please reconnect.');
@@ -133,21 +135,21 @@ class OpenAIService
         $data = $response->json();
 
         $credential->update([
-            'oauth_access_token' => $data['access_token'],
-            'oauth_refresh_token' => $data['refresh_token'] ?? $credential->oauth_refresh_token,
-            'oauth_token_expires_at' => now()->addSeconds($data['expires_in'] ?? 3600),
+            'access_token' => $data['access_token'],
+            'refresh_token' => $data['refresh_token'] ?? $credential->refresh_token,
+            'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 3600),
         ]);
 
         return $credential->fresh();
     }
 
-    protected static function resolveCredential(?User $user = null): ?UserOpenaiCredential
+    protected static function resolveCredential(?User $user = null): ?UserAiCredential
     {
         if ($user) {
-            return self::prepareCredential($user->openaiCredential);
+            return self::prepareCredential($user->aiCredentialFor('openai'));
         }
 
-        foreach (UserOpenaiCredential::query()->latest('id')->get() as $credential) {
+        foreach (UserAiCredential::query()->where('provider', 'openai')->latest('id')->get() as $credential) {
             $preparedCredential = self::prepareCredential($credential);
 
             if ($preparedCredential) {
@@ -158,7 +160,7 @@ class OpenAIService
         return null;
     }
 
-    protected static function prepareCredential(?UserOpenaiCredential $credential): ?UserOpenaiCredential
+    protected static function prepareCredential(?UserAiCredential $credential): ?UserAiCredential
     {
         if (! $credential) {
             return null;

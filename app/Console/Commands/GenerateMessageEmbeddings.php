@@ -9,7 +9,7 @@ class GenerateMessageEmbeddings extends Command
 {
     protected $signature = 'embeddings:generate
                             {--fresh : Regenerate stored message embeddings from scratch}
-                            {--batch-size=100 : Messages per OpenAI embedding request}';
+                            {--batch-size=100 : Messages per embedding provider request}';
 
     protected $description = 'Generate vector embeddings for imported messages and store them in Postgres via pgvector';
 

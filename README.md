@@ -6,7 +6,7 @@
 
 Impersonator is a Laravel application that experiments with AI-assisted WhatsApp auto-replies using your own historical message data.
 
-The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports message history from Facebook Messenger, Instagram, or WhatsApp exports, stores semantic embeddings in PostgreSQL with `pgvector`, and uses OpenAI models to generate replies that resemble your tone and phrasing.
+The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports message history from Facebook Messenger, Instagram, or WhatsApp exports, stores semantic embeddings in PostgreSQL with `pgvector`, and uses configurable chat and embedding providers to generate replies that resemble your tone and phrasing.
 
 ## What It Does
 
@@ -34,6 +34,8 @@ The app connects to WhatsApp through [WAHA](https://waha.devlike.pro/), imports 
 - Laravel Breeze for auth scaffolding
 - WAHA for WhatsApp session management
 - OpenAI for embeddings and chat completions
+- Anthropic Claude for chat completions
+- Voyage AI as an optional embeddings provider
 - PostgreSQL with `pgvector` for hybrid semantic retrieval / RAG context lookup
 
 ## Project Structure
@@ -76,11 +78,22 @@ WAHA_SESSION_NAME=default
 
 OPENAI_CLIENT_ID=
 OPENAI_CLIENT_SECRET=
-OPENAI_REDIRECT_URI=/openai/callback
+OPENAI_REDIRECT_URI=/ai/openai/callback
 OPENAI_DEFAULT_MODEL=gpt-4o
-# Optional fallback for embeddings / CLI tasks when no OpenAI credential is connected in the app
+# Optional fallback when OpenAI is selected as the active provider
 OPENAI_API_KEY=
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+ANTHROPIC_DEFAULT_MODEL=claude-3-7-sonnet-latest
+# Optional fallback when Claude is selected as the active chat provider
+ANTHROPIC_API_KEY=
+
+VOYAGE_EMBEDDING_MODEL=voyage-3-lite
+# Optional fallback when Voyage is selected as the active embedding provider
+VOYAGE_API_KEY=
+
+AI_DEFAULT_CHAT_PROVIDER=openai
+AI_DEFAULT_EMBEDDING_PROVIDER=openai
 ```
 
 ## Common Commands
@@ -98,7 +111,7 @@ php artisan embeddings:generate --fresh
 
 - `/whatsapp` manages WAHA connection, QR code retrieval, status, and disconnect flow
 - `/whatsapp/auto-reply` manages which contacts can receive automated replies
-- `/openai` manages OpenAI credentials and connection settings
+- `/ai` manages AI provider selection plus OpenAI, Claude, and Voyage credentials
 - `/imports/messages` uploads a Facebook Messenger, Instagram, or WhatsApp messages export and rebuilds embeddings automatically
 - `/webhooks/whatsapp` receives incoming WhatsApp events
 
@@ -110,6 +123,7 @@ php artisan embeddings:generate --fresh
 - Put isolated service behavior in `tests/Unit`
 - When changing auto-reply behavior, verify queue processing and webhook handling together
 - Message imports run synchronously from the upload request and rebuild embeddings immediately after import
+- Chat completion and embedding providers are configured separately so replies and retrieval can use different vendors
 
 ## License
 

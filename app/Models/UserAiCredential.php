@@ -5,32 +5,40 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class UserOpenaiCredential extends Model
+class UserAiCredential extends Model
 {
     protected $fillable = [
         'user_id',
+        'provider',
         'auth_method',
         'api_key',
-        'oauth_access_token',
-        'oauth_refresh_token',
-        'oauth_token_expires_at',
-        'openai_user_id',
-        'openai_email',
+        'access_token',
+        'refresh_token',
+        'token_expires_at',
+        'external_user_id',
+        'external_email',
+        'metadata',
     ];
 
     protected function casts(): array
     {
         return [
             'api_key' => 'encrypted',
-            'oauth_access_token' => 'encrypted',
-            'oauth_refresh_token' => 'encrypted',
-            'oauth_token_expires_at' => 'datetime',
+            'access_token' => 'encrypted',
+            'refresh_token' => 'encrypted',
+            'token_expires_at' => 'datetime',
+            'metadata' => 'array',
         ];
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isProvider(string $provider): bool
+    {
+        return $this->provider === $provider;
     }
 
     public function isApiKey(): bool
@@ -45,11 +53,11 @@ class UserOpenaiCredential extends Model
 
     public function isTokenExpired(): bool
     {
-        if (! $this->isOAuth() || ! $this->oauth_token_expires_at) {
+        if (! $this->isOAuth() || ! $this->token_expires_at) {
             return false;
         }
 
-        return $this->oauth_token_expires_at->isPast();
+        return $this->token_expires_at->isPast();
     }
 
     public function hasValidCredential(): bool
@@ -58,7 +66,7 @@ class UserOpenaiCredential extends Model
             return ! empty($this->api_key);
         }
 
-        return ! empty($this->oauth_access_token);
+        return ! empty($this->access_token);
     }
 
     public function getActiveToken(): ?string
@@ -67,6 +75,6 @@ class UserOpenaiCredential extends Model
             return $this->api_key;
         }
 
-        return $this->oauth_access_token;
+        return $this->access_token;
     }
 }

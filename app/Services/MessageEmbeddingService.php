@@ -2,26 +2,28 @@
 
 namespace App\Services;
 
-use App\Integrations\OpenAI\OpenAIService;
+use App\Contracts\EmbeddingProviderInterface;
 use App\Integrations\Pgvector\PgvectorService;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Ai\EmbeddingProviderManager;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class MessageEmbeddingService
 {
-    protected OpenAIService $openai;
+    protected EmbeddingProviderInterface $embeddingProvider;
 
     protected int $indexed = 0;
 
     public function __construct(
         protected PgvectorService $pgvector,
+        protected EmbeddingProviderManager $embeddingProviders,
     ) {}
 
     public function generate(bool $fresh = false, int $batchSize = 100, ?User $user = null): array
     {
         $this->indexed = 0;
-        $this->openai = OpenAIService::forEmbeddings($user);
+        $this->embeddingProvider = $this->embeddingProviders->forUser($user);
 
         $this->setupStorage($fresh);
 
@@ -90,7 +92,7 @@ class MessageEmbeddingService
 
     protected function processBatch(array $chunks, array $messages): void
     {
-        $embeddings = $this->openai->embeddings($chunks);
+        $embeddings = $this->embeddingProvider->embeddings($chunks);
         $documents = [];
 
         foreach ($messages as $index => $message) {

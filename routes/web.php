@@ -1,10 +1,10 @@
 <?php
 
 use App\Http\Controllers\AiTraceController;
+use App\Http\Controllers\AiCredentialController;
+use App\Http\Controllers\AiSettingsController;
 use App\Http\Controllers\AutoReplyContactController;
 use App\Http\Controllers\MessageImportController;
-use App\Http\Controllers\OpenAIAuthController;
-use App\Http\Controllers\OpenAISettingsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WhatsappController;
 use Illuminate\Support\Facades\Route;
@@ -34,12 +34,17 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    Route::prefix('openai')->name('openai.')->group(function () {
-        Route::get('/', [OpenAISettingsController::class, 'index'])->name('index');
-        Route::get('/redirect', [OpenAIAuthController::class, 'redirect'])->name('redirect');
-        Route::get('/callback', [OpenAIAuthController::class, 'callback'])->name('callback');
-        Route::post('/api-key', [OpenAIAuthController::class, 'saveApiKey'])->name('api-key.store');
-        Route::delete('/credential', [OpenAIAuthController::class, 'removeCredential'])->name('credential.destroy');
+    Route::prefix('ai')->name('ai.')->group(function () {
+        Route::get('/', [AiSettingsController::class, 'index'])->name('index');
+        Route::get('/openai/redirect', [AiCredentialController::class, 'redirect'])->name('openai.redirect');
+        Route::get('/openai/callback', [AiCredentialController::class, 'callback'])->name('openai.callback');
+        Route::post('/openai/api-key', [AiCredentialController::class, 'saveApiKey'])->name('openai.api-key.store');
+        Route::post('/anthropic/api-key', [AiCredentialController::class, 'saveAnthropicApiKey'])->name('anthropic.api-key.store');
+        Route::post('/voyage/api-key', [AiCredentialController::class, 'saveVoyageApiKey'])->name('voyage.api-key.store');
+        Route::post('/providers', [AiCredentialController::class, 'saveProviders'])->name('providers.update');
+        Route::delete('/openai/credential', [AiCredentialController::class, 'removeCredential'])->name('openai.credential.destroy');
+        Route::delete('/anthropic/credential', [AiCredentialController::class, 'removeAnthropicCredential'])->name('anthropic.credential.destroy');
+        Route::delete('/voyage/credential', [AiCredentialController::class, 'removeVoyageCredential'])->name('voyage.credential.destroy');
     });
 
     Route::prefix('imports')->name('imports.')->group(function () {

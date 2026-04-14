@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\UserAiCredential;
 use App\Models\User;
-use App\Models\UserOpenaiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class OpenAIAuthControllerTest extends TestCase
+class AiCredentialControllerTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -15,17 +15,18 @@ class OpenAIAuthControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('openai.api-key.store'), [
+        $response = $this->actingAs($user)->post(route('ai.openai.api-key.store'), [
             'api_key' => 'sk-test-key-12345',
         ]);
 
-        $response->assertRedirect(route('openai.index'));
-        $this->assertDatabaseHas('user_openai_credentials', [
+        $response->assertRedirect(route('ai.index'));
+        $this->assertDatabaseHas('user_ai_credentials', [
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
         ]);
 
-        $credential = $user->fresh()->openaiCredential;
+        $credential = $user->fresh()->aiCredentialFor('openai');
         $this->assertEquals('sk-test-key-12345', $credential->api_key);
     }
 
@@ -33,7 +34,7 @@ class OpenAIAuthControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('openai.api-key.store'), [
+        $response = $this->actingAs($user)->post(route('ai.openai.api-key.store'), [
             'api_key' => 'invalid-key',
         ]);
 
@@ -44,7 +45,7 @@ class OpenAIAuthControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('openai.api-key.store'), [
+        $response = $this->actingAs($user)->post(route('ai.openai.api-key.store'), [
             'api_key' => '',
         ]);
 
@@ -54,17 +55,19 @@ class OpenAIAuthControllerTest extends TestCase
     public function test_remove_credential(): void
     {
         $user = User::factory()->create();
-        UserOpenaiCredential::create([
+        UserAiCredential::create([
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
             'api_key' => 'sk-test-key-12345',
         ]);
 
-        $response = $this->actingAs($user)->delete(route('openai.credential.destroy'));
+        $response = $this->actingAs($user)->delete(route('ai.openai.credential.destroy'));
 
-        $response->assertRedirect(route('openai.index'));
-        $this->assertDatabaseMissing('user_openai_credentials', [
+        $response->assertRedirect(route('ai.index'));
+        $this->assertDatabaseMissing('user_ai_credentials', [
             'user_id' => $user->id,
+            'provider' => 'openai',
         ]);
     }
 
@@ -72,7 +75,7 @@ class OpenAIAuthControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('openai.redirect'));
+        $response = $this->actingAs($user)->get(route('ai.openai.redirect'));
 
         $response->assertRedirect();
         $this->assertStringContainsString('auth.openai.com', $response->headers->get('Location'));
@@ -80,31 +83,32 @@ class OpenAIAuthControllerTest extends TestCase
 
     public function test_unauthenticated_users_cannot_access_routes(): void
     {
-        $this->post(route('openai.api-key.store'), ['api_key' => 'sk-test'])
+        $this->post(route('ai.openai.api-key.store'), ['api_key' => 'sk-test'])
             ->assertRedirect(route('login'));
 
-        $this->get(route('openai.redirect'))
+        $this->get(route('ai.openai.redirect'))
             ->assertRedirect(route('login'));
 
-        $this->delete(route('openai.credential.destroy'))
+        $this->delete(route('ai.openai.credential.destroy'))
             ->assertRedirect(route('login'));
     }
 
     public function test_save_api_key_replaces_existing_credential(): void
     {
         $user = User::factory()->create();
-        UserOpenaiCredential::create([
+        UserAiCredential::create([
             'user_id' => $user->id,
+            'provider' => 'openai',
             'auth_method' => 'api_key',
             'api_key' => 'sk-old-key',
         ]);
 
-        $this->actingAs($user)->post(route('openai.api-key.store'), [
+        $this->actingAs($user)->post(route('ai.openai.api-key.store'), [
             'api_key' => 'sk-new-key-67890',
         ]);
 
-        $credential = $user->fresh()->openaiCredential;
+        $credential = $user->fresh()->aiCredentialFor('openai');
         $this->assertEquals('sk-new-key-67890', $credential->api_key);
-        $this->assertCount(1, UserOpenaiCredential::where('user_id', $user->id)->get());
+        $this->assertCount(1, UserAiCredential::where('user_id', $user->id)->where('provider', 'openai')->get());
     }
 }
