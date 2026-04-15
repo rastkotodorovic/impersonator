@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\AiTraceController;
 use App\Http\Controllers\AiCredentialController;
 use App\Http\Controllers\AiSettingsController;
+use App\Http\Controllers\AiTraceController;
 use App\Http\Controllers\AutoReplyContactController;
 use App\Http\Controllers\MessageImportController;
 use App\Http\Controllers\ProfileController;
@@ -39,8 +39,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/openai/redirect', [AiCredentialController::class, 'redirect'])->name('openai.redirect');
         Route::get('/openai/callback', [AiCredentialController::class, 'callback'])->name('openai.callback');
         Route::post('/openai/api-key', [AiCredentialController::class, 'saveApiKey'])->name('openai.api-key.store');
+        Route::post('/openai/models', [AiCredentialController::class, 'saveOpenAiModels'])->name('openai.models.store');
         Route::post('/anthropic/api-key', [AiCredentialController::class, 'saveAnthropicApiKey'])->name('anthropic.api-key.store');
+        Route::post('/anthropic/models', [AiCredentialController::class, 'saveAnthropicModels'])->name('anthropic.models.store');
         Route::post('/voyage/api-key', [AiCredentialController::class, 'saveVoyageApiKey'])->name('voyage.api-key.store');
+        Route::post('/voyage/models', [AiCredentialController::class, 'saveVoyageModels'])->name('voyage.models.store');
         Route::post('/providers', [AiCredentialController::class, 'saveProviders'])->name('providers.update');
         Route::delete('/openai/credential', [AiCredentialController::class, 'removeCredential'])->name('openai.credential.destroy');
         Route::delete('/anthropic/credential', [AiCredentialController::class, 'removeAnthropicCredential'])->name('anthropic.credential.destroy');

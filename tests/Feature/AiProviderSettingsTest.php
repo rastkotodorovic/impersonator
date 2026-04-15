@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\UserAiCredential;
 use App\Models\User;
+use App\Models\UserAiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -56,6 +56,45 @@ class AiProviderSettingsTest extends TestCase
 
         $this->assertSame('anthropic', $user->chat_provider);
         $this->assertSame('voyage', $user->embedding_provider);
+    }
+
+    public function test_save_openai_models(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('ai.openai.models.store'), [
+            'chat_model' => 'gpt-4.1-mini',
+            'embedding_model' => 'text-embedding-3-large',
+        ]);
+
+        $response->assertRedirect(route('ai.index'));
+
+        $credential = $user->fresh()->aiCredentialFor('openai');
+
+        $this->assertSame('gpt-4.1-mini', $credential->getMetadataValue('chat_model'));
+        $this->assertSame('text-embedding-3-large', $credential->getMetadataValue('embedding_model'));
+    }
+
+    public function test_save_provider_specific_models(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('ai.anthropic.models.store'), [
+            'chat_model' => 'claude-3-7-sonnet-latest',
+        ])->assertRedirect(route('ai.index'));
+
+        $this->actingAs($user)->post(route('ai.voyage.models.store'), [
+            'embedding_model' => 'voyage-3.5-lite',
+        ])->assertRedirect(route('ai.index'));
+
+        $this->assertSame(
+            'claude-3-7-sonnet-latest',
+            $user->fresh()->aiCredentialFor('anthropic')?->getMetadataValue('chat_model')
+        );
+        $this->assertSame(
+            'voyage-3.5-lite',
+            $user->fresh()->aiCredentialFor('voyage')?->getMetadataValue('embedding_model')
+        );
     }
 
     public function test_remove_provider_credentials(): void

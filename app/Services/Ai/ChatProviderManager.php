@@ -20,8 +20,8 @@ class ChatProviderManager
     public function hasConfiguredProvider(User $user): bool
     {
         return match ($user->chat_provider ?? config('services.ai.default_chat_provider', 'openai')) {
-            'anthropic' => ($user->aiCredentialFor('anthropic')?->hasValidCredential() ?? false) || filled(config('services.anthropic.api_key')),
-            default => ($user->aiCredentialFor('openai')?->hasValidCredential() ?? false) || filled(config('services.openai.api_key')),
+            'anthropic' => $user->aiCredentialFor('anthropic')?->hasValidCredential() ?? false,
+            default => $user->aiCredentialFor('openai')?->hasValidCredential() ?? false,
         };
     }
 }

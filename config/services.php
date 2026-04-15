@@ -44,6 +44,7 @@ return [
     'ai' => [
         'default_chat_provider' => env('AI_DEFAULT_CHAT_PROVIDER', 'openai'),
         'default_embedding_provider' => env('AI_DEFAULT_EMBEDDING_PROVIDER', 'openai'),
+        'embedding_batch_size' => (int) env('AI_EMBEDDING_BATCH_SIZE', 25),
     ],
 
     'openai' => [
@@ -53,6 +54,9 @@ return [
         'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-4o'),
         'api_key' => env('OPENAI_API_KEY'),
         'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'timeout' => (int) env('OPENAI_TIMEOUT', 60),
+        'embedding_timeout' => (int) env('OPENAI_EMBEDDING_TIMEOUT', 180),
+        'connect_timeout' => (int) env('OPENAI_CONNECT_TIMEOUT', 10),
     ],
 
     'anthropic' => [

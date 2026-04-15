@@ -27,17 +27,11 @@ class VoyageService implements EmbeddingProviderInterface
         if ($credential?->hasValidCredential()) {
             return new self(
                 $credential->getActiveToken(),
-                config('services.voyage.embedding_model', 'voyage-3-lite'),
+                $credential->getMetadataValue('embedding_model', 'voyage-3-lite'),
             );
         }
 
-        $apiKey = config('services.voyage.api_key');
-
-        if (! $apiKey) {
-            throw new RuntimeException('No valid Voyage credential configured. Save a Voyage API key in settings or set VOYAGE_API_KEY as a fallback.');
-        }
-
-        return new self($apiKey, config('services.voyage.embedding_model', 'voyage-3-lite'));
+        throw new RuntimeException('No valid Voyage credential configured. Save a Voyage credential in AI settings.');
     }
 
     protected function client(): PendingRequest

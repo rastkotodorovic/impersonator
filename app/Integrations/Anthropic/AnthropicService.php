@@ -27,17 +27,11 @@ class AnthropicService implements ChatCompletionProviderInterface
         if ($credential?->hasValidCredential()) {
             return new self(
                 $credential->getActiveToken(),
-                config('services.anthropic.default_model', 'claude-3-7-sonnet-latest'),
+                $credential->getMetadataValue('chat_model', 'claude-3-7-sonnet-latest'),
             );
         }
 
-        $apiKey = config('services.anthropic.api_key');
-
-        if (! $apiKey) {
-            throw new RuntimeException('No valid Anthropic credential configured.');
-        }
-
-        return new self($apiKey, config('services.anthropic.default_model', 'claude-3-7-sonnet-latest'));
+        throw new RuntimeException('No valid Anthropic credential configured. Save an Anthropic credential in AI settings.');
     }
 
     protected function client(): PendingRequest

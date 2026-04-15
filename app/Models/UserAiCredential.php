@@ -77,4 +77,9 @@ class UserAiCredential extends Model
 
         return $this->access_token;
     }
+
+    public function getMetadataValue(string $key, mixed $default = null): mixed
+    {
+        return data_get($this->metadata ?? [], $key, $default);
+    }
 }

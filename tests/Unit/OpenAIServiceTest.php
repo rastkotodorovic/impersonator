@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Models\UserAiCredential;
-use App\Models\User;
 use App\Integrations\OpenAI\OpenAIService;
+use App\Models\User;
+use App\Models\UserAiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -15,8 +15,6 @@ class OpenAIServiceTest extends TestCase
 
     public function test_embeddings_use_stored_api_key_when_present(): void
     {
-        config()->set('services.openai.api_key', null);
-
         $user = User::factory()->create();
 
         UserAiCredential::create([
@@ -46,8 +44,6 @@ class OpenAIServiceTest extends TestCase
 
     public function test_embeddings_can_use_specific_users_stored_credential(): void
     {
-        config()->set('services.openai.api_key', null);
-
         $user = User::factory()->create();
 
         UserAiCredential::create([
@@ -73,5 +69,42 @@ class OpenAIServiceTest extends TestCase
             return $request->url() === 'https://api.openai.com/v1/embeddings'
                 && $request->hasHeader('Authorization', 'Bearer sk-user-key-67890');
         });
+    }
+
+    public function test_embeddings_use_users_configured_embedding_model(): void
+    {
+        $user = User::factory()->create();
+
+        UserAiCredential::create([
+            'user_id' => $user->id,
+            'provider' => 'openai',
+            'auth_method' => 'api_key',
+            'api_key' => 'sk-user-key-67890',
+            'metadata' => [
+                'embedding_model' => 'text-embedding-3-large',
+            ],
+        ]);
+
+        Http::fake([
+            'https://api.openai.com/v1/embeddings' => Http::response([
+                'data' => [
+                    ['embedding' => [0.5, 0.6]],
+                ],
+            ]),
+        ]);
+
+        OpenAIService::forEmbeddings($user)->embeddings(['query']);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://api.openai.com/v1/embeddings'
+                && $request['model'] === 'text-embedding-3-large';
+        });
+    }
+
+    public function test_embeddings_require_dashboard_configured_credential(): void
+    {
+        $this->expectExceptionMessage('Save an OpenAI credential in AI settings.');
+
+        OpenAIService::forEmbeddings()->embeddings(['query']);
     }
 }

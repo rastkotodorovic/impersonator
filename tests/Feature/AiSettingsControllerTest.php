@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\UserAiCredential;
 use App\Models\User;
+use App\Models\UserAiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,6 +27,9 @@ class AiSettingsControllerTest extends TestCase
         $response->assertSee('AI Settings');
         $response->assertSee('Chat provider');
         $response->assertSee('Embedding provider');
+        $response->assertSee('Save OpenAI Models');
+        $response->assertSee('Save Claude Model');
+        $response->assertSee('Save Voyage Model');
         $response->assertSee('Claude');
         $response->assertSee('Voyage');
     }

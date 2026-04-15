@@ -20,10 +20,11 @@ class MessageEmbeddingService
         protected EmbeddingProviderManager $embeddingProviders,
     ) {}
 
-    public function generate(bool $fresh = false, int $batchSize = 100, ?User $user = null): array
+    public function generate(bool $fresh = false, ?int $batchSize = null, ?User $user = null): array
     {
         $this->indexed = 0;
         $this->embeddingProvider = $this->embeddingProviders->forUser($user);
+        $batchSize ??= (int) config('services.ai.embedding_batch_size', 25);
 
         $this->setupStorage($fresh);
 

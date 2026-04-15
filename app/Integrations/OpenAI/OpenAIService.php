@@ -6,6 +6,7 @@ use App\Contracts\ChatCompletionProviderInterface;
 use App\Contracts\EmbeddingProviderInterface;
 use App\Models\User;
 use App\Models\UserAiCredential;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -28,20 +29,14 @@ class OpenAIService implements ChatCompletionProviderInterface, EmbeddingProvide
     {
         $credential = self::resolveCredential($user);
 
-        if ($credential) {
-            return new self(
-                $credential->getActiveToken(),
-                config('services.openai.default_model', 'gpt-4o')
-            );
+        if (! $credential) {
+            throw new RuntimeException('No valid OpenAI credential configured. Save an OpenAI credential in AI settings.');
         }
 
-        $apiKey = config('services.openai.api_key');
-
-        if (! $apiKey) {
-            throw new RuntimeException('No valid OpenAI credential configured. Connect OpenAI in settings or set OPENAI_API_KEY as a fallback.');
-        }
-
-        return new self($apiKey);
+        return new self(
+            $credential->getActiveToken(),
+            $credential->getMetadataValue('embedding_model', self::DEFAULT_EMBEDDING_MODEL)
+        );
     }
 
     public static function forUser(User $user): self
@@ -54,22 +49,26 @@ class OpenAIService implements ChatCompletionProviderInterface, EmbeddingProvide
 
         return new self(
             $credential->getActiveToken(),
-            config('services.openai.default_model', 'gpt-4o')
+            $credential->getMetadataValue('chat_model', 'gpt-4o')
         );
     }
 
-    protected function client(): PendingRequest
+    protected function client(?int $timeout = null): PendingRequest
     {
         return Http::baseUrl('https://api.openai.com/v1')
             ->withToken($this->apiKey)
-            ->timeout(60)
+            ->connectTimeout(config('services.openai.connect_timeout', 10))
+            ->timeout($timeout ?? config('services.openai.timeout', 60))
+            ->retry(2, 1000, function (\Throwable $exception) {
+                return $exception instanceof ConnectionException;
+            })
             ->acceptJson();
     }
 
     public function embeddings(array $texts, ?string $model = null): array
     {
-        $response = $this->client()->post('/embeddings', [
-            'model' => $model ?? config('services.openai.embedding_model', 'text-embedding-3-small'),
+        $response = $this->client(config('services.openai.embedding_timeout', 180))->post('/embeddings', [
+            'model' => $model ?? $this->model,
             'input' => $texts,
         ]);
 
