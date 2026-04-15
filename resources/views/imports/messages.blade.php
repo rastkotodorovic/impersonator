@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
             @if(session('success'))
                 <div class="rounded-md bg-green-50 p-4">
                     <p class="text-sm font-medium text-green-800">Import finished</p>

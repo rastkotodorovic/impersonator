@@ -24,9 +24,9 @@
             <form method="POST" action="{{ route('ai.openai.api-key.store') }}" class="mt-4">
                 @csrf
                 <label class="block text-sm font-medium text-gray-700">API key</label>
-                <div class="mt-2 flex gap-3">
+                <div class="mt-2 flex flex-col gap-3 sm:flex-row">
                     <input type="password" name="api_key" placeholder="sk-..." required class="flex-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Save</button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:shrink-0">Save</button>
                 </div>
                 @error('api_key')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -42,7 +42,7 @@
                 <form method="POST" action="{{ route('ai.openai.credential.destroy') }}" class="mt-4">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="inline-flex items-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50">
                         Disconnect OpenAI
                     </button>
                 </form>
@@ -63,9 +63,9 @@
             <form method="POST" action="{{ route('ai.anthropic.api-key.store') }}" class="mt-4">
                 @csrf
                 <label class="block text-sm font-medium text-gray-700">API key</label>
-                <div class="mt-2 flex gap-3">
+                <div class="mt-2 flex flex-col gap-3 sm:flex-row">
                     <input type="password" name="anthropic_api_key" placeholder="Anthropic API key" required class="flex-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Save</button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:shrink-0">Save</button>
                 </div>
                 @error('anthropic_api_key')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -76,7 +76,7 @@
                 <form method="POST" action="{{ route('ai.anthropic.credential.destroy') }}" class="mt-4">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="inline-flex items-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50">
                         Disconnect Claude
                     </button>
                 </form>
@@ -97,9 +97,9 @@
             <form method="POST" action="{{ route('ai.voyage.api-key.store') }}" class="mt-4">
                 @csrf
                 <label class="block text-sm font-medium text-gray-700">API key</label>
-                <div class="mt-2 flex gap-3">
+                <div class="mt-2 flex flex-col gap-3 sm:flex-row">
                     <input type="password" name="voyage_api_key" placeholder="Voyage API key" required class="flex-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Save</button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:shrink-0">Save</button>
                 </div>
                 @error('voyage_api_key')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -110,7 +110,7 @@
                 <form method="POST" action="{{ route('ai.voyage.credential.destroy') }}" class="mt-4">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="inline-flex items-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50">
                         Disconnect Voyage
                     </button>
                 </form>
