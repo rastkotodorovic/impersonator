@@ -15,7 +15,7 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AiCredentialController extends Controller
 {
-    public function redirect(): RedirectResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function redirect(): RedirectResponse
     {
         return Socialite::driver('openai')->redirect();
     }
