@@ -1,11 +1,14 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "rastko/impersonator",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Research-only Laravel app for AI-assisted WhatsApp replies built from historical message data.",
     "keywords": [
         "laravel",
-        "framework"
+        "whatsapp",
+        "ai",
+        "rag",
+        "research"
     ],
     "license": "MIT",
     "require": {
