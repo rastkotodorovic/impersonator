@@ -4,10 +4,10 @@ An experimental Laravel application for AI-assisted WhatsApp replies built from 
 
 > [!WARNING]
 > This project is research-only software.
-> It is inspired by the "Be Right Back" episode of *Black Mirror*, but it is not intended for deception, identity fraud, or covert impersonation.
-> Do not use it to mislead people, bypass consent, or automate conversations in harmful or manipulative ways.
+> It draws inspiration from the *Black Mirror* episode "Be Right Back" and the AI-assistant satire around Gilfoyle in *Silicon Valley*, but it is not intended for deception, identity fraud, or covert impersonation.
+> Do not use it to mislead people, bypass consent, or automate conversations in harmful, manipulative, or non-consensual ways.
 
-Impersonator explores a simple question: what happens when retrieval over personal message history, prompt construction, and WhatsApp automation are combined into one research pipeline?
+Impersonator explores a simple question: what happens when someone uses your personal conversation history and AI to imitate your behavior?
 
 It imports message archives, builds embeddings, retrieves relevant prior messages, and uses an LLM to draft or send WhatsApp-style replies through WAHA. The app also stores traces so you can inspect the context, prompt, and output behind each reply.
 
