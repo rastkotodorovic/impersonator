@@ -11,11 +11,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 function getInitialViewState(session) {
     if (!session || ['disconnected', 'failed'].includes(session.status)) {
@@ -174,43 +171,7 @@ export default function WhatsappIndex({ auth, session, urls }) {
     return (
         <>
             <Head title="WhatsApp" />
-
-            <SidebarProvider defaultOpen>
-                <AppSidebar auth={auth} urls={urls} activePage="whatsapp" />
-
-                <SidebarInset className="bg-background">
-                    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
-                        <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-start gap-3">
-                                <SidebarTrigger className="mt-1" />
-                                <Separator orientation="vertical" className="mt-1 hidden h-6 bg-border lg:block" />
-
-                                <div>
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-primary">
-                                        <MessageCircleMore className="size-3.5" />
-                                        WhatsApp connection
-                                    </div>
-                                    <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                                        Connect and manage your WAHA session
-                                    </h1>
-                                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                                        Scan a QR code to link WhatsApp, review connection status, and jump straight
-                                        into auto-reply controls once the session is live.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                <ThemeToggle />
-                                <Button asChild variant="outline">
-                                    <Link href={urls.autoReply}>Auto-reply settings</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="flex-1 px-4 py-6 sm:px-6">
-                        <div className="grid gap-6 xl:grid-cols-[1.5fr_0.9fr]">
+            <div className="grid gap-6 xl:grid-cols-[1.5fr_0.9fr]">
                             <section className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm">
                                 <div className="border-b border-border bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_right,_rgba(56,189,248,0.12),_transparent_24%)] p-7 sm:p-8">
                                     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -420,10 +381,19 @@ export default function WhatsappIndex({ auth, session, urls }) {
                                     </div>
                                 </div>
                             </section>
-                        </div>
-                    </div>
-                </SidebarInset>
-            </SidebarProvider>
+            </div>
         </>
     );
 }
+
+WhatsappIndex.layout = (page) => (
+    <AppShell
+        activePage="whatsapp"
+        badge="WhatsApp connection"
+        badgeIcon={MessageCircleMore}
+        title="Connect and manage your WAHA session"
+        description="Scan a QR code to link WhatsApp, review connection status, and jump straight into auto-reply controls once the session is live."
+    >
+        {page}
+    </AppShell>
+);

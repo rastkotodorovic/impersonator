@@ -1,5 +1,6 @@
 import {
     Link,
+    usePage,
 } from '@inertiajs/react';
 import {
     Bot,
@@ -50,7 +51,9 @@ const workspaceItems = [
     },
 ];
 
-export function AppSidebar({ auth, urls, activePage = 'dashboard' }) {
+export function AppSidebar({ activePage = 'dashboard' }) {
+    const { auth = {}, urls = {} } = usePage().props;
+
     return (
         <Sidebar variant="inset" collapsible="icon">
             <SidebarHeader className="border-b border-sidebar-border/70 px-3 py-3">
@@ -62,7 +65,7 @@ export function AppSidebar({ auth, urls, activePage = 'dashboard' }) {
                             className="h-12 rounded-xl bg-sidebar-primary/10 px-3 data-[active=true]:bg-sidebar-primary/15"
                             isActive
                         >
-                            <Link href={urls.dashboard}>
+                            <Link href={urls.dashboard} prefetch="hover">
                                 <div className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
                                     <Bot className="size-4" />
                                 </div>
@@ -94,7 +97,7 @@ export function AppSidebar({ auth, urls, activePage = 'dashboard' }) {
                                             tooltip={item.title}
                                             isActive={isActive}
                                         >
-                                            <Link href={urls[item.hrefKey]}>
+                                            <Link href={urls[item.hrefKey]} prefetch="hover">
                                                 <Icon />
                                                 <span>{item.title}</span>
                                             </Link>
@@ -125,7 +128,7 @@ export function AppSidebar({ auth, urls, activePage = 'dashboard' }) {
                     </div>
 
                     <Button asChild variant="outline" className="mt-3 w-full justify-start border-sidebar-border bg-sidebar">
-                        <Link href={urls.profile}>Open profile</Link>
+                        <Link href={urls.profile} prefetch="hover">Open profile</Link>
                     </Button>
                 </div>
             </SidebarFooter>

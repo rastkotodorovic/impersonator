@@ -13,12 +13,9 @@ import {
     Upload,
 } from 'lucide-react';
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 const statCards = [
     {
@@ -127,59 +124,20 @@ export default function ImportsIndex({ auth, stats, latestRun, recentRuns, isImp
     return (
         <>
             <Head title="Imports" />
+            {flash?.success ? (
+                <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
+                    <p className="font-medium">Import finished</p>
+                    <p className="mt-1">{flash.success}</p>
+                </div>
+            ) : null}
 
-            <SidebarProvider defaultOpen>
-                <AppSidebar auth={auth} urls={urls} activePage="imports" />
+            {flash?.error ? (
+                <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {flash.error}
+                </div>
+            ) : null}
 
-                <SidebarInset className="bg-background">
-                    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
-                        <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-start gap-3">
-                                <SidebarTrigger className="mt-1" />
-                                <Separator orientation="vertical" className="mt-1 hidden h-6 bg-border lg:block" />
-
-                                <div>
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-primary">
-                                        <Database className="size-3.5" />
-                                        Message imports
-                                    </div>
-                                    <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                                        Import message history into the retrieval library
-                                    </h1>
-                                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                                        Upload Facebook, Instagram, or WhatsApp exports, rebuild embeddings, and keep
-                                        the message library ready for tone matching.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                <ThemeToggle />
-                                <Button asChild variant="outline">
-                                    <Link href={urls.ai}>Review AI settings</Link>
-                                </Button>
-                                <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                                    <Link href={urls.whatsapp}>Open WhatsApp</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="flex-1 px-4 py-6 sm:px-6">
-                        {flash?.success ? (
-                            <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
-                                <p className="font-medium">Import finished</p>
-                                <p className="mt-1">{flash.success}</p>
-                            </div>
-                        ) : null}
-
-                        {flash?.error ? (
-                            <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                                {flash.error}
-                            </div>
-                        ) : null}
-
-                        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             {statCards.map((card) => {
                                 const Icon = card.icon;
 
@@ -201,9 +159,9 @@ export default function ImportsIndex({ auth, stats, latestRun, recentRuns, isImp
                                     </article>
                                 );
                             })}
-                        </section>
+            </section>
 
-                        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
                             <section className="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
@@ -414,48 +372,56 @@ export default function ImportsIndex({ auth, stats, latestRun, recentRuns, isImp
                                     )}
                                 </section>
                             </div>
-                        </div>
+            </div>
 
-                        <section className="mt-6 rounded-[28px] border border-border bg-card p-6 shadow-sm">
-                            <div className="flex items-center gap-2">
-                                <FileArchive className="size-4 text-primary" />
-                                <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                                    Export guide
-                                </p>
-                            </div>
+            <section className="mt-6 rounded-[28px] border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <FileArchive className="size-4 text-primary" />
+                    <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                        Export guide
+                    </p>
+                </div>
 
-                            <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                                {exportGuides.map((guide) => (
-                                    <article key={guide.title} className="rounded-[24px] border border-border bg-background p-5">
-                                        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
-                                            {guide.title}
-                                        </h3>
-                                        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
-                                            {guide.steps.map((step) => (
-                                                <li key={step}>{step}</li>
-                                            ))}
-                                        </ol>
-                                    </article>
+                <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                    {exportGuides.map((guide) => (
+                        <article key={guide.title} className="rounded-[24px] border border-border bg-background p-5">
+                            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
+                                {guide.title}
+                            </h3>
+                            <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+                                {guide.steps.map((step) => (
+                                    <li key={step}>{step}</li>
                                 ))}
-                            </div>
+                            </ol>
+                        </article>
+                    ))}
+                </div>
 
-                            <div className="mt-5 rounded-[24px] border border-border bg-background p-5 text-sm leading-6 text-muted-foreground">
-                                <p className="font-medium text-foreground">What gets imported</p>
-                                <p className="mt-2">
-                                    Facebook and Instagram imports read only message data from inbox, e2ee_cutover,
-                                    and message_requests. Instagram attachment placeholders are skipped so they do not
-                                    pollute retrieval context.
-                                </p>
-                                <p className="mt-2">
-                                    WhatsApp system notices and placeholders like {'<Media omitted>'} are skipped for
-                                    the same reason. If the export is too large for browser upload, use the local path
-                                    field instead.
-                                </p>
-                            </div>
-                        </section>
-                    </div>
-                </SidebarInset>
-            </SidebarProvider>
+                <div className="mt-5 rounded-[24px] border border-border bg-background p-5 text-sm leading-6 text-muted-foreground">
+                    <p className="font-medium text-foreground">What gets imported</p>
+                    <p className="mt-2">
+                        Facebook and Instagram imports read only message data from inbox, e2ee_cutover, and
+                        message_requests. Instagram attachment placeholders are skipped so they do not pollute retrieval
+                        context.
+                    </p>
+                    <p className="mt-2">
+                        WhatsApp system notices and placeholders like {'<Media omitted>'} are skipped for the same
+                        reason. If the export is too large for browser upload, use the local path field instead.
+                    </p>
+                </div>
+            </section>
         </>
     );
 }
+
+ImportsIndex.layout = (page) => (
+    <AppShell
+        activePage="imports"
+        badge="Message imports"
+        badgeIcon={Database}
+        title="Import message history into the retrieval library"
+        description="Upload Facebook, Instagram, or WhatsApp exports, rebuild embeddings, and keep the message library ready for tone matching."
+    >
+        {page}
+    </AppShell>
+);

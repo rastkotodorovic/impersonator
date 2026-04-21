@@ -1,12 +1,9 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { MailCheck, ShieldAlert, Trash2, UserRound } from 'lucide-react';
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 function FieldError({ message }) {
     if (!message) {
@@ -64,42 +61,7 @@ export default function ProfileEdit({ auth, profile, urls, flash, errors }) {
     return (
         <>
             <Head title="Profile" />
-
-            <SidebarProvider defaultOpen>
-                <AppSidebar auth={auth} urls={urls} activePage="profile" />
-
-                <SidebarInset className="bg-background">
-                    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
-                        <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-start gap-3">
-                                <SidebarTrigger className="mt-1" />
-                                <Separator orientation="vertical" className="mt-1 hidden h-6 bg-border lg:block" />
-
-                                <div>
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-primary">
-                                        <UserRound className="size-3.5" />
-                                        Profile
-                                    </div>
-                                    <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                                        Manage account details and security
-                                    </h1>
-                                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                                        Update your identity details, rotate your password, and control account access.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                <ThemeToggle />
-                                <Button asChild variant="outline">
-                                    <Link href={urls.dashboard}>Dashboard</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="flex-1 px-4 py-6 sm:px-6">
-                        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
                             <section className="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                                 <h2 className="text-xl font-semibold text-card-foreground">Profile information</h2>
                                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -239,47 +201,56 @@ export default function ProfileEdit({ auth, profile, urls, flash, errors }) {
                                     </div>
                                 </form>
                             </section>
-                        </div>
+            </div>
 
-                        <section className="mt-6 rounded-[28px] border border-destructive/20 bg-card p-6 shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-1 rounded-2xl bg-destructive/10 p-3 text-destructive">
-                                    <ShieldAlert className="size-5" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-semibold text-card-foreground">Delete account</h2>
-                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                                        Once your account is deleted, all of its resources and data will be permanently
-                                        deleted. Enter your password to confirm that you want to permanently remove it.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={deleteAccount} className="mt-6 max-w-md space-y-5">
-                                <div>
-                                    <label className="block text-sm font-medium text-foreground" htmlFor="delete_password">
-                                        Password
-                                    </label>
-                                    <Input
-                                        id="delete_password"
-                                        type="password"
-                                        value={deletionForm.data.password}
-                                        onChange={(event) => deletionForm.setData('password', event.target.value)}
-                                        className="mt-2"
-                                        placeholder="Password"
-                                    />
-                                    <FieldError message={userDeletionErrors.password} />
-                                </div>
-
-                                <Button type="submit" variant="destructive" disabled={deletionForm.processing}>
-                                    <Trash2 className="size-4" />
-                                    Delete account
-                                </Button>
-                            </form>
-                        </section>
+            <section className="mt-6 rounded-[28px] border border-destructive/20 bg-card p-6 shadow-sm">
+                <div className="flex items-start gap-3">
+                    <div className="mt-1 rounded-2xl bg-destructive/10 p-3 text-destructive">
+                        <ShieldAlert className="size-5" />
                     </div>
-                </SidebarInset>
-            </SidebarProvider>
+                    <div>
+                        <h2 className="text-xl font-semibold text-card-foreground">Delete account</h2>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                            Once your account is deleted, all of its resources and data will be permanently deleted.
+                            Enter your password to confirm that you want to permanently remove it.
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={deleteAccount} className="mt-6 max-w-md space-y-5">
+                    <div>
+                        <label className="block text-sm font-medium text-foreground" htmlFor="delete_password">
+                            Password
+                        </label>
+                        <Input
+                            id="delete_password"
+                            type="password"
+                            value={deletionForm.data.password}
+                            onChange={(event) => deletionForm.setData('password', event.target.value)}
+                            className="mt-2"
+                            placeholder="Password"
+                        />
+                        <FieldError message={userDeletionErrors.password} />
+                    </div>
+
+                    <Button type="submit" variant="destructive" disabled={deletionForm.processing}>
+                        <Trash2 className="size-4" />
+                        Delete account
+                    </Button>
+                </form>
+            </section>
         </>
     );
 }
+
+ProfileEdit.layout = (page) => (
+    <AppShell
+        activePage="profile"
+        badge="Profile"
+        badgeIcon={UserRound}
+        title="Manage account details and security"
+        description="Update your identity details, rotate your password, and control account access."
+    >
+        {page}
+    </AppShell>
+);

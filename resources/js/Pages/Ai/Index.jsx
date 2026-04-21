@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     Bot,
     BrainCircuit,
@@ -10,12 +10,9 @@ import {
     Unplug,
 } from 'lucide-react';
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 function StatusBadge({ connected }) {
     return (
@@ -239,52 +236,13 @@ export default function AiIndex({ auth, providerSelection, providers, urls }) {
     return (
         <>
             <Head title="AI Settings" />
+            {flash?.success ? (
+                <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
+                    {flash.success}
+                </div>
+            ) : null}
 
-            <SidebarProvider defaultOpen>
-                <AppSidebar auth={auth} urls={urls} activePage="ai" />
-
-                <SidebarInset className="bg-background">
-                    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
-                        <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-start gap-3">
-                                <SidebarTrigger className="mt-1" />
-                                <Separator orientation="vertical" className="mt-1 hidden h-6 bg-border lg:block" />
-
-                                <div>
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-primary">
-                                        <BrainCircuit className="size-3.5" />
-                                        AI settings
-                                    </div>
-                                    <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                                        Manage providers, credentials, and model defaults
-                                    </h1>
-                                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                                        Choose the chat and embedding providers used across automated replies,
-                                        retrieval, and prompt generation.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                <ThemeToggle />
-                                <Button asChild variant="outline">
-                                    <Link href={urls.imports}>Open imports</Link>
-                                </Button>
-                                <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                                    <Link href={urls.whatsapp}>Open WhatsApp</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="flex-1 px-4 py-6 sm:px-6">
-                        {flash?.success ? (
-                            <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
-                                {flash.success}
-                            </div>
-                        ) : null}
-
-                        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
                             <SectionCard
                                 title="Provider selection"
                                 description="Choose the provider used for chat replies and the provider used for embeddings and retrieval."
@@ -391,9 +349,9 @@ export default function AiIndex({ auth, providerSelection, providers, urls }) {
                                     </div>
                                 </div>
                             </SectionCard>
-                        </div>
+            </div>
 
-                        <div className="mt-6 grid gap-6 xl:grid-cols-3">
+            <div className="mt-6 grid gap-6 xl:grid-cols-3">
                             <ProviderCard
                                 title="OpenAI"
                                 description="Supports chat completions and embeddings. You can use an API key or sign in with your OpenAI account."
@@ -471,49 +429,58 @@ export default function AiIndex({ auth, providerSelection, providers, urls }) {
                                 onDisconnect={disconnectVoyage}
                                 errors={errors}
                             />
-                        </div>
+            </div>
 
-                        <section className="mt-6 rounded-[28px] border border-border bg-card p-6 shadow-sm">
-                            <div className="flex items-center gap-2">
-                                <Link2 className="size-4 text-primary" />
-                                <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                                    How this affects the app
-                                </p>
-                            </div>
+            <section className="mt-6 rounded-[28px] border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <Link2 className="size-4 text-primary" />
+                    <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                        How this affects the app
+                    </p>
+                </div>
 
-                            <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                                <div className="rounded-[24px] border border-border bg-background p-5">
-                                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
-                                        Chat replies
-                                    </h3>
-                                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                                        The selected chat provider powers auto-reply generation and any app-side chat
-                                        completion features.
-                                    </p>
-                                </div>
-                                <div className="rounded-[24px] border border-border bg-background p-5">
-                                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
-                                        Retrieval
-                                    </h3>
-                                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                                        The selected embedding provider controls how imported message history is indexed
-                                        and queried for style examples.
-                                    </p>
-                                </div>
-                                <div className="rounded-[24px] border border-border bg-background p-5">
-                                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
-                                        Credentials
-                                    </h3>
-                                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                                        OpenAI supports API keys or account sign-in. Anthropic and Voyage use API-key
-                                        credentials in this app.
-                                    </p>
-                                </div>
-                            </div>
-                        </section>
+                <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                    <div className="rounded-[24px] border border-border bg-background p-5">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
+                            Chat replies
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            The selected chat provider powers auto-reply generation and any app-side chat completion
+                            features.
+                        </p>
                     </div>
-                </SidebarInset>
-            </SidebarProvider>
+                    <div className="rounded-[24px] border border-border bg-background p-5">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
+                            Retrieval
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            The selected embedding provider controls how imported message history is indexed and queried
+                            for style examples.
+                        </p>
+                    </div>
+                    <div className="rounded-[24px] border border-border bg-background p-5">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">
+                            Credentials
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            OpenAI supports API keys or account sign-in. Anthropic and Voyage use API-key credentials
+                            in this app.
+                        </p>
+                    </div>
+                </div>
+            </section>
         </>
     );
 }
+
+AiIndex.layout = (page) => (
+    <AppShell
+        activePage="ai"
+        badge="AI settings"
+        badgeIcon={BrainCircuit}
+        title="Manage providers, credentials, and model defaults"
+        description="Choose the chat and embedding providers used across automated replies, retrieval, and prompt generation."
+    >
+        {page}
+    </AppShell>
+);

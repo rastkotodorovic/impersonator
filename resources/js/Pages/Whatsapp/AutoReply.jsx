@@ -13,12 +13,9 @@ import {
     UserRoundPlus,
 } from 'lucide-react';
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 function FieldError({ message }) {
     if (!message) {
@@ -70,52 +67,13 @@ export default function AutoReply({ auth, contacts, availableConversations, rece
     return (
         <>
             <Head title="WhatsApp Auto-Reply" />
+            {flash?.success ? (
+                <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
+                    {flash.success}
+                </div>
+            ) : null}
 
-            <SidebarProvider defaultOpen>
-                <AppSidebar auth={auth} urls={urls} activePage="whatsapp" />
-
-                <SidebarInset className="bg-background">
-                    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
-                        <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-start gap-3">
-                                <SidebarTrigger className="mt-1" />
-                                <Separator orientation="vertical" className="mt-1 hidden h-6 bg-border lg:block" />
-
-                                <div>
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-primary">
-                                        <Bot className="size-3.5" />
-                                        WhatsApp auto-reply
-                                    </div>
-                                    <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                                        Manage contacts, prompt bias, and recent reply activity
-                                    </h1>
-                                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                                        Whitelist specific contacts, steer style retrieval toward a source conversation,
-                                        and review the latest WhatsApp reply activity in one place.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                                <ThemeToggle />
-                                <Button asChild variant="outline">
-                                    <Link href={urls.whatsapp}>Connection page</Link>
-                                </Button>
-                                <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                                    <Link href={urls.ai}>AI settings</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div className="flex-1 px-4 py-6 sm:px-6">
-                        {flash?.success ? (
-                            <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
-                                {flash.success}
-                            </div>
-                        ) : null}
-
-                        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                             <section className="rounded-[28px] border border-border bg-card p-6 shadow-sm">
                                 <div className="flex items-center gap-2">
                                     <UserRoundPlus className="size-4 text-primary" />
@@ -379,11 +337,20 @@ export default function AutoReply({ auth, contacts, availableConversations, rece
                                         ))}
                                     </div>
                                 )}
-                            </section>
-                        </div>
-                    </div>
-                </SidebarInset>
-            </SidebarProvider>
+                                </section>
+            </div>
         </>
     );
 }
+
+AutoReply.layout = (page) => (
+    <AppShell
+        activePage="whatsapp"
+        badge="WhatsApp auto-reply"
+        badgeIcon={Bot}
+        title="Manage contacts, prompt bias, and recent reply activity"
+        description="Whitelist specific contacts, steer style retrieval toward a source conversation, and review the latest WhatsApp reply activity in one place."
+    >
+        {page}
+    </AppShell>
+);
