@@ -13,6 +13,7 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Dashboard', [
         'urls' => [
+            'dashboard' => route('dashboard'),
             'whatsapp' => route('whatsapp.index'),
             'imports' => route('imports.index'),
             'ai' => route('ai.index'),

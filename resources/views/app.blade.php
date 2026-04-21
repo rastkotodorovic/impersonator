@@ -7,11 +7,23 @@
 
         <title inertia>{{ config('app.name', 'Impersonator') }}</title>
 
+        <script>
+            (() => {
+                const storageKey = 'theme';
+                const root = document.documentElement;
+                const storedTheme = localStorage.getItem(storageKey);
+                const theme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+
+                root.classList.toggle('dark', theme === 'dark');
+                root.dataset.theme = theme;
+            })();
+        </script>
+
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
         @inertiaHead
     </head>
-    <body class="font-sans antialiased">
+    <body class="bg-background font-sans antialiased text-foreground">
         @inertia
     </body>
 </html>
