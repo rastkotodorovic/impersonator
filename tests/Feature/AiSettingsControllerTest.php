@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\UserAiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AiSettingsControllerTest extends TestCase
@@ -23,15 +24,16 @@ class AiSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('ai.index'));
 
-        $response->assertOk();
-        $response->assertSee('AI Settings');
-        $response->assertSee('Chat provider');
-        $response->assertSee('Embedding provider');
-        $response->assertSee('Save OpenAI Models');
-        $response->assertSee('Save Claude Model');
-        $response->assertSee('Save Voyage Model');
-        $response->assertSee('Claude');
-        $response->assertSee('Voyage');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Ai/Index')
+            ->where('providerSelection.chat_provider', 'openai')
+            ->where('providerSelection.embedding_provider', 'openai')
+            ->where('providers.openai.hasCredential', false)
+            ->where('providers.anthropic.hasCredential', false)
+            ->where('providers.voyage.hasCredential', false)
+            ->where('urls.providers', route('ai.providers.update'))
+            ->where('urls.openaiRedirect', route('ai.openai.redirect'))
+        );
     }
 
     public function test_ai_settings_page_shows_connected_credentials(): void
@@ -62,11 +64,12 @@ class AiSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('ai.index'));
 
-        $response->assertOk();
-        $response->assertSee('Connected');
-        $response->assertSee('user@example.com');
-        $response->assertSee('Disconnect OpenAI');
-        $response->assertSee('Disconnect Claude');
-        $response->assertSee('Disconnect Voyage');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Ai/Index')
+            ->where('providers.openai.hasCredential', true)
+            ->where('providers.openai.externalEmail', 'user@example.com')
+            ->where('providers.anthropic.hasCredential', true)
+            ->where('providers.voyage.hasCredential', true)
+        );
     }
 }

@@ -8,20 +8,53 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageImportRun;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class MessageImportController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
-        return view('imports.messages', [
-            'latestRun' => MessageImportRun::query()->latest()->first(),
-            'recentRuns' => MessageImportRun::query()->latest()->limit(5)->get(),
-            'isImportRunning' => MessageImportRun::query()
-                ->whereIn('status', ['pending', 'processing'])
-                ->exists(),
-            'totalMessages' => Message::count(),
-            'totalConversations' => Conversation::count(),
+        $latestRun = MessageImportRun::query()->latest()->first();
+        $recentRuns = MessageImportRun::query()->latest()->limit(5)->get();
+        $isImportRunning = MessageImportRun::query()
+            ->whereIn('status', ['pending', 'processing'])
+            ->exists();
+
+        return Inertia::render('Imports/Index', [
+            'stats' => [
+                'totalMessages' => Message::count(),
+                'totalConversations' => Conversation::count(),
+                'latestImported' => $latestRun?->messages_imported ?? 0,
+                'latestSkipped' => $latestRun?->messages_skipped ?? 0,
+            ],
+            'latestRun' => $latestRun ? [
+                'status' => $latestRun->status,
+                'uploaded_filename' => $latestRun->uploaded_filename,
+                'created_at' => $latestRun->created_at?->diffForHumans(),
+                'messages_imported' => $latestRun->messages_imported ?? 0,
+                'messages_skipped' => $latestRun->messages_skipped ?? 0,
+                'conversations_count' => $latestRun->conversations_count ?? 0,
+                'error' => $latestRun->error,
+            ] : null,
+            'recentRuns' => $recentRuns->map(fn (MessageImportRun $run) => [
+                'status' => $run->status,
+                'uploaded_filename' => $run->uploaded_filename,
+                'created_at' => $run->created_at?->diffForHumans(),
+                'messages_imported' => $run->messages_imported ?? 0,
+                'messages_skipped' => $run->messages_skipped ?? 0,
+                'conversations_count' => $run->conversations_count ?? 0,
+            ])->all(),
+            'isImportRunning' => $isImportRunning,
+            'defaultMeName' => auth()->user()?->name ?? 'Rastko Todorovic',
+            'urls' => [
+                'dashboard' => route('dashboard'),
+                'profile' => route('profile.edit'),
+                'whatsapp' => route('whatsapp.index'),
+                'imports' => route('imports.index'),
+                'store' => route('imports.store'),
+                'ai' => route('ai.index'),
+            ],
         ]);
     }
 

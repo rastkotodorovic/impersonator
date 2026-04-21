@@ -1,4 +1,7 @@
 import {
+    Link,
+} from '@inertiajs/react';
+import {
     Bot,
     BrainCircuit,
     FileUp,
@@ -47,7 +50,7 @@ const workspaceItems = [
     },
 ];
 
-export function AppSidebar({ auth, urls }) {
+export function AppSidebar({ auth, urls, activePage = 'dashboard' }) {
     return (
         <Sidebar variant="inset" collapsible="icon">
             <SidebarHeader className="border-b border-sidebar-border/70 px-3 py-3">
@@ -59,7 +62,7 @@ export function AppSidebar({ auth, urls }) {
                             className="h-12 rounded-xl bg-sidebar-primary/10 px-3 data-[active=true]:bg-sidebar-primary/15"
                             isActive
                         >
-                            <a href={urls.dashboard}>
+                            <Link href={urls.dashboard}>
                                 <div className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
                                     <Bot className="size-4" />
                                 </div>
@@ -69,7 +72,7 @@ export function AppSidebar({ auth, urls }) {
                                         Shadcn operator console
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -82,7 +85,7 @@ export function AppSidebar({ auth, urls }) {
                         <SidebarMenu>
                             {workspaceItems.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = item.hrefKey === 'dashboard';
+                                const isActive = item.hrefKey === activePage;
 
                                 return (
                                     <SidebarMenuItem key={item.title}>
@@ -91,10 +94,10 @@ export function AppSidebar({ auth, urls }) {
                                             tooltip={item.title}
                                             isActive={isActive}
                                         >
-                                            <a href={urls[item.hrefKey]}>
+                                            <Link href={urls[item.hrefKey]}>
                                                 <Icon />
                                                 <span>{item.title}</span>
-                                            </a>
+                                            </Link>
                                         </SidebarMenuButton>
                                         {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
                                     </SidebarMenuItem>
@@ -122,7 +125,7 @@ export function AppSidebar({ auth, urls }) {
                     </div>
 
                     <Button asChild variant="outline" className="mt-3 w-full justify-start border-sidebar-border bg-sidebar">
-                        <a href={urls.profile}>Open profile</a>
+                        <Link href={urls.profile}>Open profile</Link>
                     </Button>
                 </div>
             </SidebarFooter>

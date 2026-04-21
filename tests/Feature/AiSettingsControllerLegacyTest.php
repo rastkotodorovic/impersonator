@@ -24,12 +24,12 @@ class AiSettingsControllerLegacyTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('ai.index'));
 
-        $response->assertOk();
-        $response->assertSee('AI Settings');
-        $response->assertSee('Chat provider');
-        $response->assertSee('Embedding provider');
-        $response->assertSee('Claude');
-        $response->assertSee('Voyage');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Ai/Index')
+            ->where('providers.openai.hasCredential', false)
+            ->where('providers.anthropic.hasCredential', false)
+            ->where('providers.voyage.hasCredential', false)
+        );
     }
 
     public function test_ai_settings_page_shows_connected_credential_details(): void
@@ -46,11 +46,12 @@ class AiSettingsControllerLegacyTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('ai.index'));
 
-        $response->assertOk();
-        $response->assertSee('Provider Selection');
-        $response->assertSee('Connected');
-        $response->assertSee('user@example.com');
-        $response->assertSee('Disconnect OpenAI');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Ai/Index')
+            ->where('providers.openai.hasCredential', true)
+            ->where('providers.openai.externalEmail', 'user@example.com')
+            ->where('providers.openai.authMethod', 'oauth')
+        );
     }
 
     public function test_ai_navigation_link_exists_on_dashboard(): void

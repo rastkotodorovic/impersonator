@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class MessageImportControllerTest extends TestCase
@@ -22,17 +23,20 @@ class MessageImportControllerTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_import_page_renders_export_instructions(): void
+    public function test_import_page_renders_inertia_payload(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get(route('imports.index'));
 
-        $response->assertOk();
-        $response->assertSee('Import Message History');
-        $response->assertSee('Download your information');
-        $response->assertSee('Messages');
-        $response->assertSee('Instagram');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Imports/Index')
+            ->where('stats.totalMessages', 0)
+            ->where('stats.totalConversations', 0)
+            ->where('isImportRunning', false)
+            ->where('urls.store', route('imports.store'))
+            ->where('urls.imports', route('imports.index'))
+        );
     }
 
     public function test_store_validates_archive_is_required(): void

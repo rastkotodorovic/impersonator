@@ -6,6 +6,7 @@ use App\Models\AutoReplyContact;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AutoReplyContactControllerTest extends TestCase
@@ -27,10 +28,12 @@ class AutoReplyContactControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('whatsapp.auto-reply.index'));
 
-        $response->assertOk();
-        $response->assertSee('Impersonation source conversation');
-        $response->assertSee('All imported conversations');
-        $response->assertSee('Dzil');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Whatsapp/AutoReply')
+            ->has('availableConversations', 1)
+            ->where('availableConversations.0.title', 'Dzil')
+            ->where('urls.store', route('whatsapp.auto-reply.contacts.store'))
+        );
     }
 
     public function test_store_saves_preferred_conversation_for_contact(): void

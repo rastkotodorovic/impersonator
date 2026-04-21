@@ -10,7 +10,8 @@ use App\Models\WhatsappSession;
 use App\Services\Ai\ChatProviderManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class WhatsappController extends Controller
 {
@@ -19,12 +20,29 @@ class WhatsappController extends Controller
         protected ChatProviderManager $chatProviders,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $session = $request->user()->whatsappSession;
 
-        return view('whatsapp.index', [
-            'session' => $session,
+        return Inertia::render('Whatsapp/Index', [
+            'session' => $session ? [
+                'status' => $session->status,
+                'phone_number' => $session->phone_number,
+                'display_name' => $session->display_name,
+                'connected_at' => $session->connected_at?->diffForHumans(),
+            ] : null,
+            'urls' => [
+                'dashboard' => route('dashboard'),
+                'profile' => route('profile.edit'),
+                'whatsapp' => route('whatsapp.index'),
+                'connect' => route('whatsapp.connect'),
+                'qrCode' => route('whatsapp.qr-code'),
+                'status' => route('whatsapp.status'),
+                'disconnect' => route('whatsapp.disconnect'),
+                'autoReply' => route('whatsapp.auto-reply.index'),
+                'imports' => route('imports.index'),
+                'ai' => route('ai.index'),
+            ],
         ]);
     }
 

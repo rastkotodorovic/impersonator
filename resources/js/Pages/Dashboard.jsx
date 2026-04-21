@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     ArrowUpRight,
     BrainCircuit,
@@ -52,7 +52,7 @@ export default function Dashboard({ auth, urls }) {
             <Head title="Dashboard" />
 
             <SidebarProvider defaultOpen>
-                <AppSidebar auth={auth} urls={urls} />
+                <AppSidebar auth={auth} urls={urls} activePage="dashboard" />
 
                 <SidebarInset className="bg-background">
                     <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -84,10 +84,10 @@ export default function Dashboard({ auth, urls }) {
 
                                 <ThemeToggle />
                                 <Button asChild variant="outline">
-                                    <a href={urls.ai}>Review provider stack</a>
+                                    <Link href={urls.ai}>Review provider stack</Link>
                                 </Button>
                                 <Button asChild className="bg-emerald-600 hover:bg-emerald-500">
-                                    <a href={urls.whatsapp}>Open WhatsApp tools</a>
+                                    <Link href={urls.whatsapp}>Open WhatsApp tools</Link>
                                 </Button>
                             </div>
                         </div>
@@ -113,7 +113,7 @@ export default function Dashboard({ auth, urls }) {
                                         </div>
 
                                         <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                                            <a href={urls.whatsapp}>Go to WhatsApp</a>
+                                            <Link href={urls.whatsapp}>Go to WhatsApp</Link>
                                         </Button>
                                     </div>
                                 </div>
@@ -148,7 +148,7 @@ export default function Dashboard({ auth, urls }) {
                                                 </div>
 
                                                 <Button asChild className={`mt-4 ${card.buttonTone}`}>
-                                                    <a href={urls[card.hrefKey]}>{card.cta}</a>
+                                                    <Link href={urls[card.hrefKey]}>{card.cta}</Link>
                                                 </Button>
                                             </div>
                                         );
