@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\UserAiCredential;
 use App\Models\User;
+use App\Models\UserAiCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AiSettingsControllerLegacyTest extends TestCase
@@ -58,7 +59,9 @@ class AiSettingsControllerLegacyTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        $response->assertSee('AI');
-        $response->assertSee(route('ai.index'), false);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('urls.ai', route('ai.index'))
+        );
     }
 }

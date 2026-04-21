@@ -8,9 +8,17 @@ use App\Http\Controllers\MessageImportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WhatsappController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
-    return view('dashboard');
+    return Inertia::render('Dashboard', [
+        'urls' => [
+            'whatsapp' => route('whatsapp.index'),
+            'imports' => route('imports.index'),
+            'ai' => route('ai.index'),
+            'profile' => route('profile.edit'),
+        ],
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
