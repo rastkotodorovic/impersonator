@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -18,7 +19,12 @@ class ProfileTest extends TestCase
             ->actingAs($user)
             ->get('/profile');
 
-        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Profile/Edit')
+            ->where('profile.name', $user->name)
+            ->where('profile.email', $user->email)
+            ->where('urls.updateProfile', route('profile.update'))
+        );
     }
 
     public function test_profile_information_can_be_updated(): void

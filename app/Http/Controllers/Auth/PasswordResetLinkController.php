@@ -7,16 +7,22 @@ use App\Http\Requests\Auth\SendPasswordResetLinkRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PasswordResetLinkController extends Controller
 {
     /**
      * Display the password reset link request view.
      */
-    public function create(): View
+    public function create(): Response
     {
-        return view('auth.forgot-password');
+        return Inertia::render('Auth/ForgotPassword', [
+            'urls' => [
+                'submit' => route('password.email'),
+                'login' => route('login'),
+            ],
+        ]);
     }
 
     /**

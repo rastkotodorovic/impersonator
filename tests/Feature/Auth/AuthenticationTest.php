@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -14,7 +15,11 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/login');
 
-        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/Login')
+            ->where('urls.login', route('login'))
+            ->where('urls.register', route('register'))
+        );
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
