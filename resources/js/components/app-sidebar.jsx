@@ -7,11 +7,9 @@ import {
     BrainCircuit,
     FileUp,
     LayoutDashboard,
+    LogOut,
     MessageCircleMore,
-    UserRound,
 } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
 import {
     Sidebar,
     SidebarContent,
@@ -21,7 +19,6 @@ import {
     SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
-    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarRail,
@@ -32,7 +29,6 @@ const workspaceItems = [
         title: 'Dashboard',
         hrefKey: 'dashboard',
         icon: LayoutDashboard,
-        badge: 'Now',
     },
     {
         title: 'WhatsApp',
@@ -53,6 +49,12 @@ const workspaceItems = [
 
 export function AppSidebar({ activePage = 'dashboard' }) {
     const { auth = {}, urls = {} } = usePage().props;
+    const initials = (auth?.user?.name ?? 'U')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('');
 
     return (
         <Sidebar variant="inset" collapsible="icon">
@@ -62,18 +64,15 @@ export function AppSidebar({ activePage = 'dashboard' }) {
                         <SidebarMenuButton
                             asChild
                             size="lg"
-                            className="h-12 rounded-xl bg-sidebar-primary/10 px-3 data-[active=true]:bg-sidebar-primary/15"
+                            className="h-12 rounded-xl bg-sidebar-primary/10 px-3 data-[active=true]:bg-sidebar-primary/15 group-data-[collapsible=icon]:justify-center"
                             isActive
                         >
                             <Link href={urls.dashboard} prefetch="hover">
                                 <div className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
                                     <Bot className="size-4" />
                                 </div>
-                                <div className="grid flex-1 text-left leading-tight">
+                                <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                                     <span className="truncate text-sm font-semibold">Impersonator</span>
-                                    <span className="truncate text-xs text-sidebar-foreground/70">
-                                        Shadcn operator console
-                                    </span>
                                 </div>
                             </Link>
                         </SidebarMenuButton>
@@ -102,7 +101,6 @@ export function AppSidebar({ activePage = 'dashboard' }) {
                                                 <span>{item.title}</span>
                                             </Link>
                                         </SidebarMenuButton>
-                                        {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
                                     </SidebarMenuItem>
                                 );
                             })}
@@ -111,26 +109,49 @@ export function AppSidebar({ activePage = 'dashboard' }) {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-sidebar-border/70 p-3">
-                <div className="rounded-2xl border border-sidebar-border bg-sidebar-accent/50 p-3">
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-sidebar-primary/15 text-sidebar-primary">
-                            <UserRound className="size-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-sidebar-foreground">
-                                {auth?.user?.name ?? 'Authenticated user'}
-                            </p>
-                            <p className="truncate text-xs text-sidebar-foreground/70">
-                                {auth?.user?.email ?? 'Profile available'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <Button asChild variant="outline" className="mt-3 w-full justify-start border-sidebar-border bg-sidebar">
-                        <Link href={urls.profile} prefetch="hover">Open profile</Link>
-                    </Button>
-                </div>
+            <SidebarFooter className="border-t border-sidebar-border/70 px-2 py-3">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            size="lg"
+                            tooltip="Account"
+                            className="h-auto min-h-12 rounded-xl px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                            isActive={activePage === 'profile'}
+                        >
+                            <Link href={urls.profile} prefetch="hover">
+                                <div className="flex size-8 items-center justify-center rounded-xl bg-sidebar-primary/15 text-xs font-semibold text-sidebar-primary">
+                                    {initials || 'U'}
+                                </div>
+                                <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
+                                    <span className="truncate text-sm font-medium text-sidebar-foreground">
+                                        {auth?.user?.name ?? 'Authenticated user'}
+                                    </span>
+                                    <span className="truncate text-xs text-sidebar-foreground/70">
+                                        {auth?.user?.email ?? 'Profile available'}
+                                    </span>
+                                </div>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                        <SidebarMenuButton asChild tooltip="Profile">
+                            <Link href={urls.profile} prefetch="hover">
+                                <span>Profile</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {auth?.logoutUrl ? (
+                        <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                            <SidebarMenuButton asChild tooltip="Log out">
+                                <Link href={auth.logoutUrl} method="post" as="button">
+                                    <LogOut />
+                                    <span>Log out</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ) : null}
+                </SidebarMenu>
             </SidebarFooter>
 
             <SidebarRail />

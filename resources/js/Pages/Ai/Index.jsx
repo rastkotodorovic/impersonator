@@ -159,15 +159,15 @@ function ProviderCard({
                 </Button>
             </form>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {oauthUrl ? (
-                    <Button asChild variant="outline">
+                    <Button asChild variant="outline" className="w-full justify-center">
                         <a href={oauthUrl}>{oauthLabel}</a>
                     </Button>
                 ) : null}
 
                 {connected ? (
-                    <Button type="button" variant="destructive" onClick={onDisconnect}>
+                    <Button type="button" variant="destructive" onClick={onDisconnect} className="w-full justify-center">
                         <Unplug className="size-4" />
                         {disconnectLabel}
                     </Button>

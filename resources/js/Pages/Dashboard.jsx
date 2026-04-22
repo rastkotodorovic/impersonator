@@ -4,7 +4,6 @@ import {
     BrainCircuit,
     FileUp,
     MessageCircleMore,
-    Sparkles,
 } from 'lucide-react';
 
 import { AppShell } from '@/components/app-shell';
@@ -48,36 +47,11 @@ export default function Dashboard({ auth, urls }) {
         <>
             <Head title="Dashboard" />
 
-            <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
-                <section className="overflow-hidden rounded-[28px] border border-border bg-card text-card-foreground shadow-sm">
-                    <div className="bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.24),_transparent_32%),radial-gradient(circle_at_right,_rgba(56,189,248,0.18),_transparent_24%)] p-7 sm:p-8 dark:bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.22),_transparent_34%),radial-gradient(circle_at_right,_rgba(59,130,246,0.16),_transparent_26%)]">
-                        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-                            <div className="max-w-2xl">
-                                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-primary">
-                                    <Sparkles className="size-3.5" />
-                                    Control center
-                                </div>
-                                <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                                    Manage the app from one clean workspace.
-                                </h2>
-                                <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-                                    The new shell keeps the dashboard focused while we migrate the rest of the product
-                                    into the same React and shadcn UI system.
-                                </p>
-                            </div>
-
-                            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                                <Link href={urls.whatsapp}>Go to WhatsApp</Link>
-                            </Button>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="rounded-[28px] border border-border bg-card p-6 shadow-sm">
-                    <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                        Quick actions
-                    </p>
-                    <div className="mt-5 space-y-4">
+            <section className="rounded-[28px] border border-border bg-card p-6 shadow-sm">
+                <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                    Quick actions
+                </p>
+                <div className="mt-5 grid gap-4 xl:grid-cols-3">
                         {actionCards.map((card) => {
                             const Icon = card.icon;
 
@@ -107,9 +81,8 @@ export default function Dashboard({ auth, urls }) {
                                 </div>
                             );
                         })}
-                    </div>
-                </section>
-            </div>
+                </div>
+            </section>
         </>
     );
 }
@@ -117,9 +90,8 @@ export default function Dashboard({ auth, urls }) {
 Dashboard.layout = (page) => (
     <AppShell
         activePage="dashboard"
-        badge="Shadcn dashboard"
-        badgeIcon={Sparkles}
-        title="Operator dashboard"
+        badge="Dashboard"
+        title="Control center"
         description="Quick access to WhatsApp, imports, and AI settings."
     >
         {page}

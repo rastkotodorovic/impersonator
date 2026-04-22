@@ -1,4 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useRef } from 'react';
 import {
     CheckCircle2,
     Database,
@@ -103,6 +104,7 @@ function FieldError({ message }) {
 
 export default function ImportsIndex({ auth, stats, latestRun, recentRuns, isImportRunning, defaultMeName, urls }) {
     const { flash, errors } = usePage().props;
+    const archiveInputRef = useRef(null);
     const { data, setData, post, processing } = useForm({
         archive: null,
         source_path: '',
@@ -120,6 +122,7 @@ export default function ImportsIndex({ auth, stats, latestRun, recentRuns, isImp
     }
 
     const submitDisabled = processing || isImportRunning;
+    const selectedArchiveName = data.archive?.name ?? 'No file selected';
 
     return (
         <>
@@ -187,13 +190,42 @@ export default function ImportsIndex({ auth, stats, latestRun, recentRuns, isImp
                                         <label className="block text-sm font-medium text-foreground" htmlFor="archive">
                                             Export file
                                         </label>
-                                        <Input
+                                        <input
                                             id="archive"
+                                            ref={archiveInputRef}
                                             type="file"
                                             accept=".zip,.txt"
-                                            className="mt-3 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary"
+                                            className="sr-only"
                                             onChange={(event) => setData('archive', event.target.files?.[0] ?? null)}
                                         />
+                                        <div className="mt-3 rounded-2xl border border-dashed border-border bg-card/60 p-4">
+                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                                            <FileArchive className="size-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-sm font-medium text-foreground">
+                                                                {selectedArchiveName}
+                                                            </p>
+                                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                                Accepts `.zip` and `.txt` exports
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="shrink-0"
+                                                    onClick={() => archiveInputRef.current?.click()}
+                                                >
+                                                    {data.archive ? 'Choose another file' : 'Choose file'}
+                                                </Button>
+                                            </div>
+                                        </div>
                                         <p className="mt-2 text-xs leading-5 text-muted-foreground">
                                             Works with Facebook Messenger and Instagram ZIP archives, plus WhatsApp
                                             exported chat .txt or .zip files.

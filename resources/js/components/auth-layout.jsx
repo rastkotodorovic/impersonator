@@ -1,17 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { Fingerprint, ShieldCheck } from 'lucide-react';
+import { Fingerprint } from 'lucide-react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export function AuthLayout({ title, description, children, footer }) {
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 sm:px-6 lg:flex-row lg:items-stretch lg:gap-6 lg:px-8">
-                <aside className="relative hidden overflow-hidden rounded-[32px] border border-border bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_right,_rgba(59,130,246,0.16),_transparent_24%)] p-8 shadow-sm lg:flex lg:w-[40%] lg:flex-col lg:justify-between">
+            <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 lg:flex-row lg:items-center lg:gap-12 lg:px-8">
+                <aside className="hidden lg:block lg:w-[32%] lg:pr-4">
                     <div>
-                        <Link href="/" className="inline-flex items-center gap-3">
-                            <div className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                                <Fingerprint className="size-5" />
+                        <Link href="/" className="inline-flex items-center gap-3 text-foreground">
+                            <div className="flex size-10 items-center justify-center rounded-2xl border border-border bg-card">
+                                <Fingerprint className="size-4" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold">Impersonator</p>
@@ -19,31 +19,25 @@ export function AuthLayout({ title, description, children, footer }) {
                             </div>
                         </Link>
 
-                        <div className="mt-14 max-w-md">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] text-primary">
-                                <ShieldCheck className="size-3.5" />
-                                Account flow
-                            </div>
-                            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-foreground">
-                                One consistent shell for access, identity, and recovery.
+                        <div className="mt-10 max-w-sm">
+                            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                                A small control panel for AI-assisted message replies.
                             </h1>
                             <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                                The same design system now covers login, registration, recovery, verification, and the
-                                authenticated account pages.
+                                Connect WhatsApp, import message history, and tune the AI stack that powers suggested
+                                replies.
                             </p>
-                        </div>
-                    </div>
 
-                    <div className="rounded-3xl border border-border bg-background/70 p-5 backdrop-blur">
-                        <p className="text-sm font-medium text-foreground">What this unlocks</p>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                            A cleaner onboarding path now that the main operator pages and account flow share the same
-                            React and shadcn UI foundation.
-                        </p>
+                            <ul className="mt-8 space-y-3 text-sm text-muted-foreground">
+                                <li>Connect and manage a WhatsApp session.</li>
+                                <li>Import past conversations for retrieval and tone matching.</li>
+                                <li>Choose providers and models for generated replies.</li>
+                            </ul>
+                        </div>
                     </div>
                 </aside>
 
-                <main className="flex flex-1 flex-col justify-center lg:py-8">
+                <main className="flex flex-1 flex-col justify-center lg:max-w-md lg:py-8">
                     <div className="flex justify-end lg:mb-6">
                         <ThemeToggle />
                     </div>

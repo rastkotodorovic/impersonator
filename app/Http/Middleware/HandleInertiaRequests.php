@@ -20,6 +20,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user()?->only('id', 'name', 'email'),
+                'logoutUrl' => $request->user() ? route('logout') : null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
